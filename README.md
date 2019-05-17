@@ -16,6 +16,13 @@ newer. In that case, the following lines will do:
     source ./env/bin/activate
     pip install --upgrade pip
     pip install wheel cython numpy
+
+    # install VTK 7.x with Python 3.x bindings
+    sudo add-apt-repository -y ppa:elvstone/vtk7
+    sudo apt update
+    sudo apt install -y vtk7
+    echo "/opt/VTK-7.0.0/lib/python3.5/site-packages" > env/lib/python3.5/site-packages/vtk7.pth
+
     pip install -r requirements.0.txt
     pip install -r requirements.1.txt
     git submodule update --init

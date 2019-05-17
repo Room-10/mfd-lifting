@@ -163,7 +163,8 @@ class DiscretizedManifold(object):
     @cached_property
     def sim_means(self):
         """ Each row is the mean point of a simplex in the triangulation. """
-        return self.mean(self.verts[self.simplices])
+        vv = self.verts[self.simplices]
+        return self.mean(vv[None], np.ones((1,1,self.ndim+1)))[0,:,0]
 
     @cached_property
     def sim_tangent_bases(self):

@@ -1,6 +1,7 @@
 
 import logging
 import os
+import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -18,7 +19,7 @@ class Experiment(BaseExperiment):
             self.params['solver'].update({
                 'granularity': int(1e4),
                 'term_maxiter': int(5e5),
-                'steps': 'precond',
+                'steps': 'adaptive',
             })
 
     def plot(self, record=False):
@@ -51,15 +52,31 @@ class Experiment(BaseExperiment):
             res_x =  self.model.x.vars(self.result['data'][0], True)
 
             u_proj = self.model.proj(res_x['u'])
-            plot_polys(self.data.mfd.verts, self.data.mfd.simplices)
-            plt.plot(u_proj[:,0], u_proj[:,1])
-            c = self.data.curve(self.data.rhoGrid)
-            plt.plot(c[:,0], c[:,1])
+            crv = self.data.curve(self.data.rhoGrid)
 
-            R = self.data.R.reshape(self.data.M_tris, self.data.N_image, -1)
-            Rbase = self.data.Rbase.reshape(self.data.M_tris, self.data.N_image, -1)
-            plot_trifuns(self.data.S, [[(R[:,i],Rbase[:,i]) for i in [0,1,2]],
-                                       [(R[:,i],Rbase[:,i]) for i in [3,4,5]]])
-
-            plt.show()
-            self.plot(record=True)
+            if self.data.mfd.ndim == self.data.mfd.nembdim:
+                plot_polys(self.data.mfd.verts, self.data.mfd.simplices)
+                plt.plot(*np.hsplit(crv,2), c="r")
+                plt.plot(*np.hsplit(u_proj,2), c="b")
+                plt.scatter(*np.hsplit(self.data.S.reshape(-1,2),2),
+                            c='#808080',
+                            s=10.0,
+                            marker='x')
+                for cu in np.stack((crv,u_proj), axis=1):
+                    plt.plot(*np.hsplit(cu,2), c='#A0A0A0', linestyle="--")
+                #R = self.data.R.reshape(self.data.M_tris, self.data.N_image, -1)
+                #Rbase = self.data.Rbase.reshape(self.data.M_tris, self.data.N_image, -1)
+                #plot_trifuns(self.data.S, [[(R[:,i],Rbase[:,i]) for i in [0,1,2]],
+                #                           [(R[:,i],Rbase[:,i]) for i in [3,4,5]]])
+                plt.show()
+                self.plot(record=True)
+            else:
+                from mayavi import mlab
+                x,y,z = np.hsplit(self.data.mfd.verts, 3)
+                mlab.triangular_mesh(x, y, z, self.data.mfd.simplices)
+                mlab.plot3d(*np.hsplit(crv,3), color=(1,0,0), tube_radius=.01)
+                mlab.plot3d(*np.hsplit(u_proj,3), color=(0,0,1), tube_radius=.01)
+                for cu in np.stack((crv,u_proj), axis=1):
+                    mlab.plot3d(*np.hsplit(cu,3), color=(0.5,0.5,0.5), tube_radius=.005)
+                mlab.points3d(*np.hsplit(self.data.S.reshape(-1,3),3), scale_factor=.02)
+                mlab.show()

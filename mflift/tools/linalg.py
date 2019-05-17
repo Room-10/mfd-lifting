@@ -48,13 +48,15 @@ def barygrid(ndim, nse, boundary=True):
     return np.array(grid, dtype=np.float64)/(nse-1)
 
 def normalize(u, p=2, thresh=0.0):
-    """ Normalizes u along the columns with norm p.
+    """ Normalizes u along the last axis with norm p.
 
     If  |u| <= thresh, 0 is returned (this mimicks the sign function).
     """
-    multi = u.ndim == 2
-    u = u if multi else u.reshape(1,-1)
-    ns = norm(u, ord=p, axis=1)
+    ndim = u.shape[-1]
+    multi = u.shape if u.ndim > 1 else None
+    u = u.reshape(1,ndim) if multi is None else u.reshape(-1,ndim)
+    ns = np.linalg.norm(u, ord=p, axis=1)
     fact = np.zeros_like(ns)
     fact[ns > thresh] = 1.0/ns[ns > thresh]
-    return fact[:,None]*u if multi else fact[0]*u
+    out = fact[:,None]*u
+    return out[0] if multi is None else out.reshape(multi)

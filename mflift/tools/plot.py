@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 def plot_polys(verts, polys, facecolors=(1,1,1)):
     collection = PolyCollection([verts[p,::-1] for p in polys])
     collection.set_facecolor(facecolors)
-    collection.set_edgecolor((0,0,0))
+    collection.set_edgecolor((0.5,0.5,0.5))
     ax = plt.gca()
     ax.add_collection(collection)
     xmin, xmax = np.amin(verts[:,1]), np.amax(verts[:,1])
