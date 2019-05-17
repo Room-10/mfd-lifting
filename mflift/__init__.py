@@ -54,7 +54,24 @@ class Experiment(BaseExperiment):
             u_proj = self.model.proj(res_x['u'])
             crv = self.data.curve(self.data.rhoGrid)
 
-            if self.data.mfd.ndim == self.data.mfd.nembdim:
+            if self.data.mfd.nembdim == 3 or hasattr(self.data.mfd, "embed"):
+                verts = self.data.mfd.verts
+                subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
+                if hasattr(self.data.mfd, "embed"):
+                    verts = self.data.mfd.embed(verts)
+                    u_proj = self.data.mfd.embed(u_proj)
+                    crv = self.data.mfd.embed(crv)
+                    subgrid = self.data.mfd.embed(subgrid)
+                from mayavi import mlab
+                x,y,z = np.hsplit(verts, 3)
+                mlab.triangular_mesh(x, y, z, self.data.mfd.simplices)
+                mlab.plot3d(*np.hsplit(u_proj,3), color=(0,0,1), tube_radius=.01)
+                mlab.plot3d(*np.hsplit(crv,3), color=(1,0,0), tube_radius=.01)
+                for cu in np.stack((crv,u_proj), axis=1):
+                    mlab.plot3d(*np.hsplit(cu,3), color=(0.5,0.5,0.5), tube_radius=.005)
+                mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)
+                mlab.show()
+            else:
                 plot_polys(self.data.mfd.verts, self.data.mfd.simplices)
                 plt.plot(*np.hsplit(crv,2), c="r")
                 plt.plot(*np.hsplit(u_proj,2), c="b")
@@ -70,13 +87,3 @@ class Experiment(BaseExperiment):
                 #                           [(R[:,i],Rbase[:,i]) for i in [3,4,5]]])
                 plt.show()
                 self.plot(record=True)
-            else:
-                from mayavi import mlab
-                x,y,z = np.hsplit(self.data.mfd.verts, 3)
-                mlab.triangular_mesh(x, y, z, self.data.mfd.simplices)
-                mlab.plot3d(*np.hsplit(crv,3), color=(1,0,0), tube_radius=.01)
-                mlab.plot3d(*np.hsplit(u_proj,3), color=(0,0,1), tube_radius=.01)
-                for cu in np.stack((crv,u_proj), axis=1):
-                    mlab.plot3d(*np.hsplit(cu,3), color=(0.5,0.5,0.5), tube_radius=.005)
-                mlab.points3d(*np.hsplit(self.data.S.reshape(-1,3),3), scale_factor=.02)
-                mlab.show()
