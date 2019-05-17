@@ -7,10 +7,19 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from repyducible.experiment import Experiment as BaseExperiment
 
-from mflift.tools.plot import plot_polys
+from mflift.tools.plot import plot_polys, plot_trifuns
 
 class Experiment(BaseExperiment):
     extra_source_files = ['demo.py','README.md']
+
+    def init_params(self, *args):
+        BaseExperiment.init_params(self, *args)
+        if self.pargs.solver == "pdhg":
+            self.params['solver'].update({
+                'granularity': int(1e4),
+                'term_maxiter': int(5e5),
+                'steps': 'precond',
+            })
 
     def plot(self, record=False):
         if self.pargs.plot == "no":
@@ -46,6 +55,11 @@ class Experiment(BaseExperiment):
             plt.plot(u_proj[:,0], u_proj[:,1])
             c = self.data.curve(self.data.rhoGrid)
             plt.plot(c[:,0], c[:,1])
+
+            R = self.data.R.reshape(self.data.M_tris, self.data.N_image, -1)
+            Rbase = self.data.Rbase.reshape(self.data.M_tris, self.data.N_image, -1)
+            plot_trifuns(self.data.S, [[(R[:,i],Rbase[:,i]) for i in [0,1,2]],
+                                       [(R[:,i],Rbase[:,i]) for i in [3,4,5]]])
 
             plt.show()
             self.plot(record=True)

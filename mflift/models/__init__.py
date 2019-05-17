@@ -22,10 +22,20 @@ class SublabelModel(PDBaseModel):
             return
         N_image = self.data.N_image
         L_labels = self.data.L_labels
+        M_tris = self.data.M_tris
+        s_gamma = self.data.s_gamma
         self.epifct = EpigraphSupportFct(self.data.Rbase, self.data.Rfaces,
-                                         self.data.Q, self.data.S, self.data.R)
+                                         self.data.Qbary, self.data.Sbary,
+                                         self.data.R)
+
+        # Ab (M_tris, s_gamma+1, s_gamma+1)
+        Ab_mats = np.zeros((M_tris, s_gamma+1, s_gamma+1),
+                           dtype=np.float64, order='C')
+        Ab_mats[:] = np.eye(s_gamma+1)[None]
+        Ab_mats[:,-1,:] = -1
+
         self.linblocks.update({
-            'PAb': IndexedMultAdj(L_labels, N_image, self.data.P, self.data.Ab_mats),
+            'PAb': IndexedMultAdj(L_labels, N_image, self.data.P, Ab_mats),
             'S': MatrixMultR(N_image, np.ones((L_labels, 1), order='C')),
         })
 
@@ -51,4 +61,4 @@ class SublabelModel(PDBaseModel):
         tmp_u = u.copy()
         np.clip(tmp_u, 0.0, 1.0, out=tmp_u)
         tmp_u /= tmp_u.sum(axis=1)[:,None]
-        return self.data.mfd.mean(self.data.T, weights=tmp_u)
+        return self.data.mfd.mean(self.data.T[None,None], tmp_u[None])[0,0]
