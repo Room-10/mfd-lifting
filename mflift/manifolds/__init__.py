@@ -18,6 +18,44 @@ class DiscretizedManifold(object):
         self.nsimplices = self.simplices.shape[0]
         assert self.simplices.shape[1] == self.ndim + 1
 
+    def embed_barycentric(self, x):
+        """ Determine barycentric coordinates with respect to triangulation
+
+        Args:
+            x : ndarray of floats, shape (npoints, nembdim)
+
+        Returns:
+            containing_simplices : ndarray of ints, shape (npoints,)
+                point `i` is contained in simplex `containing_simplices[i]`
+            coords : ndarray of floats, shape (npoints, nverts)
+                `coords[i,mf.simplices[containing_simplices[i]]]` are the
+                barycentric coordinates of point i relative to the containing
+                simplex. Moreover: `mf.mean(mf.verts, coords[i]) == x[i]`.
+        """
+        npoints = x.shape[0]
+        assert x.shape[1] == self.nembdim
+        tverts = self.log(x[None], self.verts[None])[0,:,self.simplices]
+        tdirs = tverts[:,:,1:] - tverts[:,:,:1]
+        tcoords = np.linalg.solve(tdirs, -tverts[:,:,0])
+        tcoords = np.concatenate((tcoords, 1 - tcoords.sum(axis=-1)[:,:,None]), axis=-1)
+        mask_01 = np.logical_and(tcoords > -tol, tcoords < 1.0+tol)
+        mask_01 = np.all(mask_01, axis=2)
+        indices_01 = [w.nonzero()[0] for w in mask_01]
+        outsiders = np.array([i.size == 0 for i in indices_01], dtype=bool)
+        assert not np.any(outsiders)
+        idx_01 = np.array((npoints,), dtype=np.int64, order='C')
+        coords = np.zeros((npoints, self.nverts), order='C')
+        for i,j in enumerate(indices_01):
+            if len(j) > 1:
+                dists = np.sum(tverts[i,self.simplices[j]]**2, axis=-1)
+                wdists = np.sum(tcoords[i,j]*dists, axis=-1)
+                j = np.argmin(wdists)
+            else:
+                j = j[0]
+            idx_01[i] = j
+            coords[i,self.simplices[j]] = tcoords[i,j]
+        return idx_01, coords
+
     @broadcast_io(1,1)
     def log(self, location, pfrom, out=None):
         """ Inverse exponential map at `location` evaluated at `pfrom`

@@ -45,13 +45,13 @@ class SublabelModel(PDBaseModel):
         if self.data.initializer is None:
             x['u'][:] = 1.0/self.data.L_labels
         else:
-            s = self.data.initializer.shape[-1]
-            uproj = np.zeros((self.data.N_image,s))
+            nembdim = self.data.initializer.shape[-1]
+            uproj = np.zeros((self.data.N_image,nembdim))
             if self.data.initializer.ndim == 1:
                 uproj[:] = [self.data.initializer]
             else:
                 uproj[:] = self.data.initializer
-            utris, coords = self.data.mfd.embed(uproj)
+            utris, coords = self.data.mfd.embed_barycentric(uproj)
             x['u'][:] = coords
             for i,tr in enumerate(utris):
                 x['w12'][tr,i,:-1] = coords[i,self.data.P[tr,:-1]]

@@ -17,6 +17,7 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
+        self.initializer = self.curve(self.rhoGrid)
         ManifoldValuedData.__init__(self, Square(2.1, 5), *args, **kwargs)
 
     def curve(self, t):
