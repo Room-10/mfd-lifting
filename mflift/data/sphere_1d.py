@@ -8,9 +8,9 @@ from mflift.tools.image import cell_centered_grid
 class Data(ManifoldValuedData):
     name = "sphere-1d"
     d_image = 1
-    imagedims = (20,)
+    imagedims = (50,)
     imageh = (1.0,)
-    l_dimsubls = 7
+    l_dimsubls = 10
     rhoDomain = np.array([[0.0,1.0]])
 
     def __init__(self, *args, **kwargs):

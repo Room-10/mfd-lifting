@@ -8,6 +8,53 @@ from matplotlib import colors
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+def plot_curves(curves, mfd, subgrid=None):
+    if mfd.nembdim == 3 or hasattr(mfd, "embed"):
+        plot_surface_curves(curves, mfd, subgrid=subgrid)
+    else:
+        plot_curves_2d(curves, mfd, subgrid=subgrid)
+
+def plot_surface_curves(curves, mfd, subgrid=None):
+    """ Plot curves on a triangulated surface embedded in R^3 """
+    from mayavi import mlab
+    verts = mfd.verts
+    if hasattr(mfd, "embed"):
+        verts, subgrid, *curves = map(mfd.embed, [verts,subgrid] + curves)
+
+    x,y,z = np.hsplit(verts, 3)
+    mlab.triangular_mesh(x, y, z, mfd.simplices)
+    mlab.triangular_mesh(x, y, z, mfd.simplices,
+        representation='wireframe', color=(0,0,0))
+
+
+    if subgrid is not None:
+        mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)
+
+    for i, crv in enumerate(curves):
+        rgb = (1,0,0) if i%2 == 0 else (0,0,1)
+        mlab.plot3d(*np.hsplit(crv,3), color=rgb, tube_radius=.01)
+
+    for crv in np.stack(curves, axis=1):
+        mlab.plot3d(*np.hsplit(crv,3), color=(0.5,0.5,0.5), tube_radius=.005)
+
+    mlab.show()
+
+def plot_curves_2d(curves, tri, subgrid=None):
+    """ Plot curves on a triangulated area in the plane """
+    plot_polys(tri.verts, tri.simplices)
+
+    if subgrid is not None:
+        plt.scatter(*np.hsplit(subgrid,2), c='#808080', s=10.0, marker='x')
+
+    for i,crv in enumerate(curves):
+        plt.plot(*np.hsplit(crv,2), c="r" if i%2 == 0 else "b")
+
+    for crv in np.stack(curves, axis=1):
+        plt.plot(*np.hsplit(crv,2), c='#A0A0A0', linestyle="--")
+
+    plt.axis('equal')
+    plt.show()
+
 def plot_polys(verts, polys, facecolors=(1,1,1)):
     collection = PolyCollection([verts[p,::-1] for p in polys])
     collection.set_facecolor(facecolors)

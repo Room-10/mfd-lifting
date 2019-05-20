@@ -8,9 +8,9 @@ from mflift.tools.image import cell_centered_grid
 class Data(ManifoldValuedData):
     name = "flat-1d"
     d_image = 1
-    imagedims = (10,)
+    imagedims = (50,)
     imageh = (1.0,)
-    l_dimsubls = 5
+    l_dimsubls = 20
     rhoDomain = np.array([[0.0,1.0]])
 
     def __init__(self, *args, **kwargs):
@@ -18,10 +18,13 @@ class Data(ManifoldValuedData):
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
         self.initializer = self.curve(self.rhoGrid)
-        ManifoldValuedData.__init__(self, Square(2.1, 5), *args, **kwargs)
+        ManifoldValuedData.__init__(self, Square(2.1, 2), *args, **kwargs)
 
     def curve(self, t):
-        return np.hstack((t*np.cos(4*t*np.pi), t*np.sin(4*t*np.pi)))
+        # Spiral:
+        return (0.8 - 0.5*t)*np.hstack((np.cos(4*t*np.pi), np.sin(4*t*np.pi)))
+        # Straight line:
+        #return np.hstack((-0.4 + 0.7*t, -0.9 + 1.5*t))
 
     def rho_x(self, x, z):
         return 0.5*self.mfd.dist(self.curve(x)[None], z[None])[0]**2

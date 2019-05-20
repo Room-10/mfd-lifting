@@ -15,9 +15,9 @@ class Moebius(DiscretizedManifold):
             tres : resolution in width component
             phires : resolution in angle component
         """
-        th = 2*tmax/tres
+        th = 2*tmax/(tres - 1)
         phih = 2*np.pi/phires
-        t, phi = np.meshgrid(np.arange(-tmax+th/2, tmax, th),
+        t, phi = np.meshgrid(np.linspace(-tmax, tmax, tres),
                              np.arange(0, 2*np.pi, phih))
         v = np.vstack((phi.ravel(order='C'), t.ravel(order='C'))).T
         self.verts = np.ascontiguousarray(v)
