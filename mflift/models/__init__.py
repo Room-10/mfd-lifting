@@ -32,7 +32,7 @@ class SublabelModel(PDBaseModel):
         Ab_mats = np.zeros((M_tris, s_gamma+1, s_gamma+1),
                            dtype=np.float64, order='C')
         Ab_mats[:] = np.eye(s_gamma+1)[None]
-        Ab_mats[:,-1,:] = -1
+        Ab_mats[...,-1] = -1
 
         self.linblocks.update({
             'PAb': IndexedMultAdj(L_labels, N_image, self.data.P, Ab_mats),

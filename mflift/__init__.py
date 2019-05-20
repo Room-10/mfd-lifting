@@ -76,14 +76,9 @@ class Experiment(BaseExperiment):
                 plt.plot(*np.hsplit(crv,2), c="r")
                 plt.plot(*np.hsplit(u_proj,2), c="b")
                 plt.scatter(*np.hsplit(self.data.S.reshape(-1,2),2),
-                            c='#808080',
-                            s=10.0,
-                            marker='x')
+                            c='#808080', s=10.0, marker='x')
                 for cu in np.stack((crv,u_proj), axis=1):
                     plt.plot(*np.hsplit(cu,2), c='#A0A0A0', linestyle="--")
-                #R = self.data.R.reshape(self.data.M_tris, self.data.N_image, -1)
-                #Rbase = self.data.Rbase.reshape(self.data.M_tris, self.data.N_image, -1)
-                #plot_trifuns(self.data.S, [[(R[:,i],Rbase[:,i]) for i in [0,1,2]],
-                #                           [(R[:,i],Rbase[:,i]) for i in [3,4,5]]])
+                plt.axis('equal')
                 plt.show()
                 self.plot(record=True)
