@@ -9,26 +9,30 @@ class Sphere(DiscretizedManifold):
     """ 2-dimensional sphere embedded into 3-dimensional euclidean space """
     ndim = 2
 
-    def __init__(self, refinement=2, verts=None):
+    def __init__(self, h, verts=None):
         """ Setup a triangular grid on the 2-sphere.
 
         Args:
+            h : maximal length of edges in the triangulation
             verts : ndarray of floats, shape (npoints, 3)
-            refinement : int
-                If `vecs` is None, the triangulation is generated using
-                `trisphere(refinement)` (see below).
         """
         if verts is None:
-            self.verts, self.simplices = trisphere(refinement)
-            self.verts = normalize(self.verts)
+            self.verts, self.simplices = sphmesh_icosahedron()
         else:
             assert verts.shape[1] == 3
             self.verts = normalize(verts)
             sv = SphericalVoronoi(self.verts)
             sv.sort_vertices_of_regions()
             self.simplices = np.ascontiguousarray(sv._tri.simplices)
+        DiscretizedManifold.__init__(self, h)
 
-        DiscretizedManifold.__init__(self)
+    def mesh(self, h):
+        triverts = self.verts[self.simplices]
+        diffs = np.stack((triverts[:,1] - triverts[:,0],
+                          triverts[:,2] - triverts[:,0],
+                          triverts[:,2] - triverts[:,1],), axis=1)
+        rep = max(0, np.ceil(np.log2(np.linalg.norm(diffs, axis=-1).max()/h)))
+        return sphmesh_refine(self.verts, self.simplices, repeat=rep)
 
     def _log(self, location, pfrom, out):
         """ exp_l^{-1}(p) = d(l,p)*(p - <p,l>l)/|p - <p,l>l| """
@@ -53,23 +57,15 @@ class Sphere(DiscretizedManifold):
         np.einsum('ikm,ilm->ikl', x, y, out=out)
         out[:]= np.arccos(np.clip(out, -1.0, 1.0))
 
-def trisphere(n):
-    """ Calculates a sphere triangulation of 12*(4^n) vertices.
-
-    The algorithm starts from an icosahedron (12 vertices, 20 triangles) and
-    applies the following procedure `n` times: Each triangular face is split
-    into four triangles using the triangle's edge centers as new vertices.
-
-    Args:
-        n : grade of refinement; n=0 means 12 vertices (icosahedron).
+def sphmesh_icosahedron():
+    """ Spherical regular icosahedron (12 vertices, 20 triangles).
 
     Returns:
-        tuple (verts, tris)
-        verts : numpy array, each column corresponds to a point on the sphere
-        tris : numpy array, each column defines a triangle on the sphere
-               through indices into `verts`
+        verts : ndarray of floats, shape (12,3)
+            Each row corresponds to a point on the unit sphere.
+        tris : ndarray of floats, shape (20,3)
+            Each row defines a triangle through indices into `verts`.
     """
-    # Setup regular icosahedron:
     # (X, Z) : solution to X/Z = Z/(X + Z) and 1 = X^2 + Z^2
     X = ((5 - 5**0.5)/10)**0.5
     Z = (1 - X**2)**0.5
@@ -112,31 +108,53 @@ def trisphere(n):
         [ 7,  2, 11]
     ])
 
-    for i in range(n):
-        nverts = verts.shape[0]
-        edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
+    return normalize(verts), tris
 
-        newverts = [v for v in verts]
-        for tri in tris:
-            for e in [[tri[0],tri[1]],[tri[1],tri[2]],[tri[2],tri[0]]]:
-                if edgecenters[e[0],e[1]] == 0:
-                    newverts.append(normalize(0.5*(verts[e[0]] + verts[e[1]])))
-                    edgecenters[e[0],e[1]] = nverts
-                    edgecenters[e[1],e[0]] = nverts
-                    nverts += 1
-        assert np.all(edgecenters > 0)
-        verts = np.asarray(newverts)
+def sphmesh_refine(verts, tris, repeat=1):
+    """ Refine a sphere triangulation
 
-        newtris = []
-        for tri in tris:
-            a = edgecenters[tri[1],tri[2]]
-            b = edgecenters[tri[2],tri[0]]
-            c = edgecenters[tri[0],tri[1]]
-            newtris.extend([
-                [tri[0], c, b],
-                [tri[1], a, c],
-                [tri[2], b, a],
-                [     a, b, c]
-            ])
-        tris = np.asarray(newtris)
-    return verts, tris
+    The algorithm applies the following procedure to a given triangulation:
+    Each triangular face is split into four triangles using the triangle's edge
+    centers as new vertices.
+
+    Args:
+        verts : ndarray of floats, shape (nverts,3)
+        tris : ndarray of floats, shape (ntris,3)
+        repeat : int
+            The refinement procedure is iterated `repeat` times.
+            If `repeat` is 0, the input is returned unchanged.
+
+    Returns:
+        verts : ndarray of floats, shape (nverts,3)
+        tris : ndarray of floats, shape (ntris,3)
+    """
+    if repeat == 0: return verts, tris
+
+    nverts = verts.shape[0]
+    edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
+
+    newverts = [v for v in verts]
+    for tri in tris:
+        for e in [[tri[0],tri[1]],[tri[1],tri[2]],[tri[2],tri[0]]]:
+            if edgecenters[e[0],e[1]] == 0:
+                newverts.append(normalize(0.5*(verts[e[0]] + verts[e[1]])))
+                edgecenters[e[0],e[1]] = nverts
+                edgecenters[e[1],e[0]] = nverts
+                nverts += 1
+    verts = np.asarray(newverts)
+
+    newtris = []
+    for tri in tris:
+        a = edgecenters[tri[1],tri[2]]
+        b = edgecenters[tri[2],tri[0]]
+        c = edgecenters[tri[0],tri[1]]
+        assert a*b*c > 0
+        newtris.extend([
+            [tri[0], c, b],
+            [tri[1], a, c],
+            [tri[2], b, a],
+            [     a, b, c]
+        ])
+    tris = np.asarray(newtris)
+
+    return sphmesh_refine(verts, tris, repeat=repeat-1)

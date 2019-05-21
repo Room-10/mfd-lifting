@@ -17,15 +17,20 @@ def plot_curves(curves, mfd, subgrid=None):
 def plot_surface_curves(curves, mfd, subgrid=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
     from mayavi import mlab
-    verts = mfd.verts
+
+    verts, simplices = mfd.mesh(0.2)
     if hasattr(mfd, "embed"):
         verts, subgrid, *curves = map(mfd.embed, [verts,subgrid] + curves)
-
     x,y,z = np.hsplit(verts, 3)
-    mlab.triangular_mesh(x, y, z, mfd.simplices)
-    mlab.triangular_mesh(x, y, z, mfd.simplices,
-        representation='wireframe', color=(0,0,0))
+    mlab.triangular_mesh(x, y, z, simplices,
+        color=(0.8,0.8,0.0), opacity=0.9)
 
+    verts, simplices = mfd.verts, mfd.simplices
+    if hasattr(mfd, "embed"):
+        verts = mfd.embed(verts)
+    x,y,z = np.hsplit(verts, 3)
+    mlab.triangular_mesh(x, y, z, simplices,
+        representation='wireframe', color=(0,0,0))
 
     if subgrid is not None:
         mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)

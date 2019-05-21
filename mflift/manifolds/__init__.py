@@ -13,7 +13,9 @@ class DiscretizedManifold(object):
     verts = None
     simplices = None
 
-    def __init__(self):
+    def __init__(self, h):
+        """ h : maximal length of edges in the triangulation """
+        self.verts, self.simplices = self.mesh(h)
         self.nverts, self.nembdim = self.verts.shape
         self.nsimplices = self.simplices.shape[0]
         assert self.simplices.shape[1] == self.ndim + 1

@@ -26,7 +26,11 @@ class FlatManifold(DiscretizedManifold):
             self.simplices = [idx[i:i+2] for i in range(self.nverts-1)]
         self.simplices = np.ascontiguousarray(self.simplices)
 
-        DiscretizedManifold.__init__(self)
+        DiscretizedManifold.__init__(self, 1)
+
+    def mesh(self, h):
+        """ dummy function for compatibility """
+        return self.verts, self.simplices
 
     def _log(self, location, pfrom, out):
         out[:] = pfrom[:,None,:,:] - location[:,:,None,:]

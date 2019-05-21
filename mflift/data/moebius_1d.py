@@ -17,8 +17,7 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        mfd = Moebius(0.5, 2, 10)
-        ManifoldValuedData.__init__(self, mfd, *args, **kwargs)
+        ManifoldValuedData.__init__(self, Moebius(0.5, 2*np.pi/5), *args, **kwargs)
 
     def curve(self, t):
         vals = np.hstack(((-1.3 + 1.2*t)*np.pi,

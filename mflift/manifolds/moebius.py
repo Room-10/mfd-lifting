@@ -7,20 +7,35 @@ class Moebius(DiscretizedManifold):
     """ Flat 2-dimensional Moebius strip """
     ndim = 2
 
-    def __init__(self, tmax, tres, phires):
-        """ Setup a triangular grid on the Moebius strip.
+    def __init__(self, tmax, h):
+        """ Setup for a Moebius strip of width 2*tmax.
 
         Args:
             tmax : half the width of the strip
-            tres : resolution in width component
-            phires : resolution in angle component
+            h : step width of the triangulation
         """
-        th = 2*tmax/(tres - 1)
+        self.tmax = tmax
+        DiscretizedManifold.__init__(self, h)
+
+    def mesh(self, h):
+        """ Return a triangular grid on the Moebius strip.
+
+        Args:
+            h : float or pair of floats
+                Step widths in width and angular components of the strip.
+        """
+        if np.isscalar(h):
+            h = (h,h)
+        assert len(h) == 2
+        tres = max(2, int(np.ceil(1 + 2*self.tmax/h[0])))
+        phires = max(2, int(np.ceil(2*np.pi/h[1])))
+
+        th = 2*self.tmax/(tres - 1)
         phih = 2*np.pi/phires
-        t, phi = np.meshgrid(np.linspace(-tmax, tmax, tres),
+        t, phi = np.meshgrid(np.linspace(-self.tmax, self.tmax, tres),
                              np.arange(0, 2*np.pi, phih))
         v = np.vstack((phi.ravel(order='C'), t.ravel(order='C'))).T
-        self.verts = np.ascontiguousarray(v)
+        verts = np.ascontiguousarray(v)
 
         ti, phii = np.meshgrid(np.arange(0, tres - 1), np.arange(0, phires))
         phi00, t00 = moeb_idx_normalize(phii + 0, ti + 0, phires, tres)
@@ -29,8 +44,8 @@ class Moebius(DiscretizedManifold):
         phi11, t11 = moeb_idx_normalize(phii + 1, ti + 1, phires, tres)
 
         M_tris = 2*phires*(tres - 1)
-        self.simplices = np.zeros((M_tris, 3), order='C', dtype=np.int64)
-        self.simplices[:] = np.concatenate((
+        simplices = np.zeros((M_tris, 3), order='C', dtype=np.int64)
+        simplices[:] = np.concatenate((
             np.vstack(((phi00*tres + t00).ravel(order='C'),
                        (phi01*tres + t01).ravel(order='C'),
                        (phi11*tres + t11).ravel(order='C'),)).T,
@@ -38,8 +53,7 @@ class Moebius(DiscretizedManifold):
                        (phi10*tres + t10).ravel(order='C'),
                        (phi11*tres + t11).ravel(order='C'),)).T,
             ), axis=0)
-
-        DiscretizedManifold.__init__(self)
+        return verts, simplices
 
     def _log(self, location, pfrom, out):
         out[:] = pfrom[:,None] - location[:,:,None]
