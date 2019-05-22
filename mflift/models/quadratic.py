@@ -44,10 +44,13 @@ class Model(SublabelModel):
         d_image = self.data.d_image
         M_tris = self.data.M_tris
         s_gamma = self.data.s_gamma
+
         Id_w2 = np.zeros((s_gamma+1,d_image*s_gamma+1), order='C')
         Id_w2[-1,-1] = 1.0
+
         Adext = np.zeros((M_tris,s_gamma,d_image*s_gamma+1), order='C')
         Adext[:,:,:-1] = np.tile(self.data.Ad, (1,1,d_image))
+
         self.linblocks.update({
             'Grad': GradientOp(imagedims, L_labels),
             'PB': IndexedMultAdj(L_labels, d_image*N_image, self.data.P, self.data.B),
@@ -72,7 +75,7 @@ class Model(SublabelModel):
         AdMult = self.linblocks['Adext']
         Id_w2 = self.linblocks['Id_w2']
 
-        etahat = QuadSupport(M_tris*N_image, s_gamma*d_image, self.lbd)
+        etahat = QuadSupport(M_tris*N_image, s_gamma*d_image, a=self.lbd)
 
         Id_u = IdentityOp(x['u']['size'])
         Id_w12 = IdentityOp(x['w12']['size'])

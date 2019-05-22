@@ -30,6 +30,8 @@ class Experiment(BaseExperiment):
         res_x =  self.model.x.vars(self.result['data'][0], True)
         u_proj = self.model.proj(res_x['u'])
         subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
+        if self.model.name == "rof":
+            subgrid = None
 
         if self.data.d_image == 1:
             crv = self.data.curve(self.data.rhoGrid)
