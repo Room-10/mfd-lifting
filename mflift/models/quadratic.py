@@ -48,8 +48,8 @@ class Model(SublabelModel):
         Id_w2 = np.zeros((s_gamma+1,d_image*s_gamma+1), order='C')
         Id_w2[-1,-1] = 1.0
 
-        Adext = np.zeros((M_tris,s_gamma,d_image*s_gamma+1), order='C')
-        Adext[:,:,:-1] = np.tile(self.data.Ad, (1,1,d_image))
+        Adext = np.zeros((M_tris,d_image*s_gamma,d_image*s_gamma+1), order='C')
+        Adext[:,:,:-1] = np.tile(self.data.Ad, (1,d_image,d_image))
 
         self.linblocks.update({
             'Grad': GradientOp(imagedims, L_labels),

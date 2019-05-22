@@ -1,22 +1,65 @@
 
 import numpy as np
 
+from scipy.io import loadmat
 from scipy.spatial import Delaunay
 
 import matplotlib.pyplot as plt
-from matplotlib import colors
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib import colors, cm
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-def plot_curves(curves, mfd, subgrid=None):
-    if mfd.nembdim == 3 or hasattr(mfd, "embed"):
-        plot_surface_curves(curves, mfd, subgrid=subgrid)
-    else:
-        plot_curves_2d(curves, mfd, subgrid=subgrid)
+def plot_terrain_maps(Is, dt, filename=None):
+    fig = plt.figure(figsize=(12, 10), dpi=100)
 
-def plot_surface_curves(curves, mfd, subgrid=None):
+    imagedims = Is[0].shape[:-1]
+    ccm = loadmat("data/cm_mountain.mat")['ccm']
+    X, Y = np.split(dt['normalscoords'], 2, axis=0)
+    X = X.reshape(imagedims, order='F')
+    Y = Y.reshape(imagedims, order='F')
+    uuh = np.flip(dt['uuh'], axis=0)
+    uuh_col = ccm[np.int64(255*(uuh - uuh.min())/(uuh.max() - uuh.min()))]
+
+    lightnormal = np.array([1,-1,-1.5], dtype=np.float64)
+    lightnormal /= np.linalg.norm(lightnormal)
+    for i,I in enumerate(Is):
+        Iabs = np.fmax(0, np.einsum('k,ijk->ij', -lightnormal, I))
+        col = uuh_col*Iabs[:,:,None]
+
+        ax = fig.add_subplot(300 + 10*len(Is) + (0*len(Is)+i+1))
+        ax.imshow(col)
+        ax.invert_yaxis()
+
+        ax = fig.add_subplot(300 + 10*len(Is) + (1*len(Is)+i+1), projection='3d')
+        ax.plot_surface(X, Y, Iabs, facecolors=col,
+                        linewidth=0, antialiased=False)
+        ax.view_init(elev=75., azim=-80)
+
+        ax = fig.add_subplot(300 + 10*len(Is) + (2*len(Is)+i+1))
+        ax.quiver(I[:,:,0], I[:,:,1])
+        ax.axis('equal')
+
+    if filename is None:
+        plt.show()
+    else:
+        fig = plt.gcf()
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
+
+def plot_curves(curves, mfd, subgrid=None, filename=None):
+    if mfd.nembdim == 3 or hasattr(mfd, "embed"):
+        plot_surface_curves(curves, mfd, subgrid=subgrid, filename=filename)
+    else:
+        plot_curves_2d(curves, mfd, subgrid=subgrid, filename=filename)
+
+def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
     from mayavi import mlab
+    if filename is not None:
+        mlab.options.offscreen = True
+    mfig = mlab.figure(size=(1024, 1024))
 
     verts, simplices = mfd.mesh(0.2)
     if hasattr(mfd, "embed"):
@@ -42,10 +85,14 @@ def plot_surface_curves(curves, mfd, subgrid=None):
     for crv in np.stack(curves, axis=1):
         mlab.plot3d(*np.hsplit(crv,3), color=(0.5,0.5,0.5), tube_radius=.005)
 
-    mlab.show()
+    if filename is None:
+        mlab.show()
+    else:
+        mlab.savefig(filename, figure=mfig, magnification=2)
 
-def plot_curves_2d(curves, tri, subgrid=None):
+def plot_curves_2d(curves, tri, subgrid=None, filename=None):
     """ Plot curves on a triangulated area in the plane """
+    plt.figure(figsize=(12, 10), dpi=100)
     plot_polys(tri.verts, tri.simplices)
 
     if subgrid is not None:
@@ -58,7 +105,14 @@ def plot_curves_2d(curves, tri, subgrid=None):
         plt.plot(*np.hsplit(crv,2), c='#A0A0A0', linestyle="--")
 
     plt.axis('equal')
-    plt.show()
+
+    if filename is None:
+        plt.show()
+    else:
+        fig = plt.gcf()
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
 
 def plot_polys(verts, polys, facecolors=(1,1,1)):
     collection = PolyCollection([verts[p,::-1] for p in polys])

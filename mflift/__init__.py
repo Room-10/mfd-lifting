@@ -8,7 +8,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from repyducible.experiment import Experiment as BaseExperiment
 
-from mflift.tools.plot import plot_curves
+from mflift.tools.plot import plot_curves, plot_terrain_maps
 
 class Experiment(BaseExperiment):
     extra_source_files = ['demo.py','README.md']
@@ -23,16 +23,37 @@ class Experiment(BaseExperiment):
             })
 
     def plot(self, record=False):
-        if self.pargs.plot != "show":
+        if self.pargs.plot == "no":
             return
 
-        logging.info("Plotting results interactively...")
-        res_x =  self.model.x.vars(self.result['data'][0], True)
-        u_proj = self.model.proj(res_x['u'])
         subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
         if self.model.name == "rof":
             subgrid = None
 
-        if self.data.d_image == 1:
-            crv = self.data.curve(self.data.rhoGrid)
-            plot_curves([crv, u_proj], self.data.mfd, subgrid=subgrid)
+        outputs = []
+        if record:
+            logging.info("Recording plots...")
+            outputs = [(self.result, "plot-result.pdf")]
+            if self.pargs.snapshots:
+                outputs += [(s, "snapshot-%02d.png" % i)
+                            for i,s in enumerate(self.snapshots)]
+        elif self.pargs.plot != "hide":
+            logging.info("Plotting results interactively...")
+            outputs = [(self.result, None)]
+
+        for res,f in outputs:
+            f = f if f is None else os.path.join(self.output_dir, f)
+            res_x =  self.model.x.vars(res['data'][0], True)
+            u_proj = self.model.proj(res_x['u'])
+            if self.data.d_image == 1:
+                crv = self.data.curve(self.data.rhoGrid)
+                plot_curves([crv, u_proj], self.data.mfd,
+                    subgrid=subgrid, filename=f)
+            elif self.data.d_image == 2 and self.data.name[:4] == "bull":
+                I = self.data.I.reshape(self.data.imagedims + (3,))
+                Iu = u_proj.reshape(self.data.imagedims + (3,))
+                plot_terrain_maps([I,Iu], self.data.extra, filename=f)
+
+
+        if not record:
+            self.plot(record=True)
