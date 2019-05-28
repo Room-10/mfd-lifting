@@ -71,7 +71,7 @@ class Model(SublabelModel):
 
         if self.data.constraints is not None:
             constrmask, constru = self.data.constraints
-            constru_lifted = self.data.tri.embed(constru)[1]
+            constru_lifted = self.data.mfd.embed_barycentric(constru)[1]
             Gu = ConstrainFct(constrmask, constru_lifted)
         else:
             Gu = PositivityFct(x['u']['size'])
