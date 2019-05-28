@@ -6,11 +6,14 @@ from scipy.spatial import Delaunay
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib import colors, cm
+from matplotlib import colors, cm, rc
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def plot_terrain_maps(Is, dt, filename=None):
+    rc('grid', linestyle=':')
+    rc('font', size=8)
+    rc('font', family='serif')
     fig = plt.figure(figsize=(12, 10), dpi=100)
 
     imagedims = Is[0].shape[:-1]
@@ -18,7 +21,9 @@ def plot_terrain_maps(Is, dt, filename=None):
     X, Y = np.split(dt['normalscoords'], 2, axis=0)
     X = X.reshape(imagedims, order='F')
     Y = Y.reshape(imagedims, order='F')
-    uuh = np.flip(dt['uuh'], axis=0)
+    Xuu, Yuu = [np.arange(s) for s in dt['uu'].shape]
+    Xuu, Yuu = np.meshgrid(Xuu, Yuu)
+    uuh = dt['uuh']
     uuh_col = ccm[np.int64(255*(uuh - uuh.min())/(uuh.max() - uuh.min()))]
 
     lightnormal = np.array([1,-1,-1.5], dtype=np.float64)
@@ -27,18 +32,24 @@ def plot_terrain_maps(Is, dt, filename=None):
         Iabs = np.fmax(0, np.einsum('k,ijk->ij', -lightnormal, I))
         col = uuh_col*Iabs[:,:,None]
 
-        ax = fig.add_subplot(300 + 10*len(Is) + (0*len(Is)+i+1))
-        ax.imshow(col)
-        ax.invert_yaxis()
+        ax = fig.add_subplot(200 + 10*len(Is) + (0*len(Is)+i+1), projection='3d')
+        ax.plot_surface(Xuu, Yuu, dt['uu'], facecolors=col)
+        ax.view_init(elev=70., azim=100)
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.set_xlim((0,dt['uu'].shape[0]))
+        ax.set_ylim((0,dt['uu'].shape[1]))
+        ax.set_zlim((dt['uu'].min()-0.5, dt['uu'].max()-1))
+        ztickmin = int(10*np.ceil(dt['uu'].min()/10))
+        ztickmax = int(10*np.floor(dt['uu'].max()/10))
+        ax.set_zticks(range(ztickmin, ztickmax+5, 5))
 
-        ax = fig.add_subplot(300 + 10*len(Is) + (1*len(Is)+i+1), projection='3d')
-        ax.plot_surface(X, Y, Iabs, facecolors=col,
-                        linewidth=0, antialiased=False)
-        ax.view_init(elev=75., azim=-80)
-
-        ax = fig.add_subplot(300 + 10*len(Is) + (2*len(Is)+i+1))
-        ax.quiver(I[:,:,0], I[:,:,1])
-        ax.axis('equal')
+        ax = fig.add_subplot(200 + 10*len(Is) + (1*len(Is)+i+1))
+        ax.quiver(X, Y, I[:,:,1], I[:,:,0], color='b', headwidth=4, headlength=4,
+            headaxislength=4, width=0.002)
+        ax.set_xlim((-0.5,39))
+        ax.set_ylim((-0.5,39))
 
     if filename is None:
         plt.show()
