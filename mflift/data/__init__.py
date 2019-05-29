@@ -27,7 +27,7 @@ class ManifoldValuedData(BaseData):
 
         # B (M_tris, s_gamma, s_gamma+1)
         # Ad (M_tris, s_gamma, s_gamma)
-        self.B, self.Ad = self.mfd.sim_derivative_matrices
+        self.B, self.Ad = self.mfd.mean_derivative_matrices
 
         # Qbary (1, m_sublabels)
         # Sbary (m_sublabels, s_gamma)
@@ -39,8 +39,8 @@ class ManifoldValuedData(BaseData):
         logging.info("Label space: %d labels, %d tris, %d sublabels (%d per tri)"
             % (self.L_labels, self.M_tris, self.l_sublabels, self.m_sublabels))
 
-        # R (N*M_tris, m_sublabels)
-        # Rbase (N*M_tris, m_sublabels)
+        # R (M_tris*N, m_sublabels)
+        # Rbase (M_tris*N, m_sublabels)
         npoints = self.N*self.l_sublabels
         nhulls = self.N*self.M_tris
         M, N, m = self.M_tris, self.N_image, self.m_sublabels
@@ -52,10 +52,14 @@ class ManifoldValuedData(BaseData):
         self.Rbase, self.Rfaces = piecewise_convexify(self.Sbary, self.R, self.Qbary)
 
     def init_subgrid(self):
-        bary = barygrid(self.s_gamma, self.l_dimsubls, boundary=True)
-        bary = bary[np.all(bary != 1, axis=1)]
-        bary = np.concatenate((np.eye(self.s_gamma+1), bary), axis=0)
-        subgrid = self.mfd.mean(self.T[self.P][None], bary[None])[0]
+        if self.l_dimsubls == 2:
+            bary = np.eye(self.s_gamma+1)
+            subgrid = self.T[self.P]
+        else:
+            bary = barygrid(self.s_gamma, self.l_dimsubls, boundary=True)
+            bary = bary[np.all(bary != 1, axis=1)]
+            bary = np.concatenate((np.eye(self.s_gamma+1), bary), axis=0)
+            subgrid = self.mfd.mean(self.T[self.P][None], bary[None])[0]
         self.Sbary = np.array(bary[:,:-1], dtype=np.float64, order='C')
         self.Qbary = np.arange(bary.shape[0])[None,:]
         self.Qbary = np.array(self.Qbary, dtype=np.int64, order='C')

@@ -54,7 +54,6 @@ def plot_terrain_maps(Is, dt, filename=None):
     if filename is None:
         plt.show()
     else:
-        fig = plt.gcf()
         canvas = FigureCanvasAgg(fig)
         canvas.print_figure(filename)
         plt.close(fig)

@@ -23,7 +23,16 @@ def piecewise_convexify(points, vals, regions):
         faces : nfuns lists of nregions arrays of ints, shape (nfaces,ndim+1) each
             faces[i][j] contains indices into regions[j].
     """
-    assert points.shape[1] in [1,2]
+    npoints, ndim = points.shape
+    nfuns = vals.shape[0]
+    nregions, nsubpoints = regions.shape
+
+    if nsubpoints == ndim+1:
+        base = np.ones((nfuns, npoints), dtype=np.int8, order='C')
+        faces = [[np.arange(ndim+1, dtype=np.int64)[None]]]*nfuns
+        return base.astype(bool), faces
+    else:
+        assert points.shape[1] in [1,2]
 
     if points.shape[1] == 1:
         return piecewise_convexify_1d(points, vals, regions)
