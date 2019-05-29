@@ -3,8 +3,8 @@ import logging
 import numpy as np
 
 from opymize import Variable
-from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, \
-                                PositivityFct, L1Norms, AffineFct
+from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, L1Norms, \
+                                PositivityFct, AffineFct, EpigraphSupportFct
 from opymize.linear import BlockOp, IdentityOp, GradientOp, \
                            IndexedMultAdj, MatrixMultR, MatrixMultRBatched
 

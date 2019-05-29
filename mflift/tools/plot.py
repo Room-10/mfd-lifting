@@ -10,6 +10,20 @@ from matplotlib import colors, cm, rc
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+def plot_hue_images(Is, filename=None):
+    fig = plt.figure(figsize=(10, 10), dpi=100)
+
+    for i,I in enumerate(Is):
+        ax = fig.add_subplot(100 + 10*len(Is) + (i+1))
+        ax.imshow(I, cmap='hsv')
+
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
+
 def plot_terrain_maps(Is, dt, filename=None):
     rc('grid', linestyle=':')
     rc('font', size=8)
