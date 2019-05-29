@@ -15,7 +15,7 @@ def plot_hue_images(Is, filename=None):
 
     for i,I in enumerate(Is):
         ax = fig.add_subplot(100 + 10*len(Is) + (i+1))
-        ax.imshow(I, cmap='hsv')
+        ax.imshow(I, vmin=0, vmax=2*np.pi, cmap='hsv')
 
     if filename is None:
         plt.show()

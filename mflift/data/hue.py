@@ -14,7 +14,8 @@ class Data(ManifoldValuedData):
     l_dimsubls = 6
 
     def __init__(self, *args, **kwargs):
-        self.I = np.array(rgb2hsv(astronaut())[:100,:100,0], dtype=np.float64)
+        self.I = np.array(rgb2hsv(astronaut())[:80,:80,0], dtype=np.float64)
+        self.I *= 2*np.pi # I comes with hue normalized to [0,1]
         self.imagedims = self.I.shape
         self.d_image = len(self.imagedims)
         self.N = self.N_image = np.prod(self.imagedims)
