@@ -7,16 +7,6 @@ class Moebius(DiscretizedManifold):
     """ Flat 2-dimensional Moebius strip """
     ndim = 2
 
-    def __init__(self, tmax, h):
-        """ Setup for a Moebius strip of width 2*tmax.
-
-        Args:
-            tmax : half the width of the strip
-            h : step width of the triangulation
-        """
-        self.tmax = tmax
-        DiscretizedManifold.__init__(self, h)
-
     def mesh(self, h):
         """ Return a triangular grid on the Moebius strip.
 
@@ -27,12 +17,12 @@ class Moebius(DiscretizedManifold):
         if np.isscalar(h):
             h = (h,h)
         assert len(h) == 2
-        tres = max(2, int(np.ceil(1 + 2*self.tmax/h[0])))
+        tres = max(2, int(np.ceil(1 + 1.0/h[0])))
         phires = max(2, int(np.ceil(2*np.pi/h[1])))
 
-        th = 2*self.tmax/(tres - 1)
+        th = 1.0/(tres - 1)
         phih = 2*np.pi/phires
-        t, phi = np.meshgrid(np.linspace(-self.tmax, self.tmax, tres),
+        t, phi = np.meshgrid(np.linspace(-0.5, 0.5, tres),
                              np.arange(0, 2*np.pi, phih))
         v = np.vstack((phi.ravel(order='C'), t.ravel(order='C'))).T
         verts = np.ascontiguousarray(v)
