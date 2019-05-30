@@ -13,7 +13,11 @@ class Data(ManifoldValuedData):
     l_dimsubls = 10
     filename = "data/bull-nn.mat"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, sublabel=True, **kwargs):
+        sph_h = 2*np.pi/5
+        if not sublabel:
+            sph_h = 2*np.pi/45
+            self.l_dimsubls = 2
         self.extra = loadmat(self.filename)
         self.imagedims = self.extra['uuh'].shape
         self.d_image = len(self.imagedims)
@@ -21,8 +25,8 @@ class Data(ManifoldValuedData):
         self.I = self.I.transpose(2,1,0)
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = self.imagedims
-        self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        ManifoldValuedData.__init__(self, Sphere(2*np.pi/5), *args, **kwargs)
+        self.rhoGrid, _ = cell_centered_grid(self.rhoDomain, self.rhoResolution)
+        ManifoldValuedData.__init__(self, Sphere(sph_h), *args, **kwargs)
 
     def rho(self, z):
         I = self.I.reshape(-1,3)
