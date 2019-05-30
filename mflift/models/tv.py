@@ -4,7 +4,7 @@ import numpy as np
 
 from opymize import Variable
 from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, L1Norms, \
-                                PositivityFct, AffineFct, EpigraphSupportFct
+                                PositivityFct, AffineFct, EpigraphSupp
 from opymize.linear import BlockOp, IdentityOp, GradientOp, \
                            IndexedMultAdj, MatrixMultR, MatrixMultRBatched
 
@@ -72,9 +72,9 @@ class Model(SublabelModel):
             self.rho = self.rho.ravel()
         else:
             logging.info("Setup for sublabel-accurate model...")
-            self.epifct = EpigraphSupportFct(self.data.Rbase, self.data.Rfaces,
-                                             self.data.Qbary, self.data.Sbary,
-                                             self.data.R)
+            self.epifct = EpigraphSupp(self.data.Rbase, self.data.Rfaces,
+                                       self.data.Qbary, self.data.Sbary,
+                                       self.data.R)
 
             # Ab (M_tris, s_gamma+1, s_gamma+1)
             Ab = np.zeros((M_tris, s_gamma+1, s_gamma+1),

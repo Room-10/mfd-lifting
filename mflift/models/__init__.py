@@ -4,7 +4,7 @@ import numpy as np
 
 from repyducible.model import PDBaseModel
 
-from opymize.functionals import EpigraphSupportFct
+from opymize.functionals import EpigraphSupp
 from opymize.linear import IndexedMultAdj, MatrixMultR
 
 class SublabelModel(PDBaseModel):
@@ -24,9 +24,9 @@ class SublabelModel(PDBaseModel):
         L_labels = self.data.L_labels
         M_tris = self.data.M_tris
         s_gamma = self.data.s_gamma
-        self.epifct = EpigraphSupportFct(self.data.Rbase, self.data.Rfaces,
-                                         self.data.Qbary, self.data.Sbary,
-                                         self.data.R)
+        self.epifct = EpigraphSupp(self.data.Rbase, self.data.Rfaces,
+                                   self.data.Qbary, self.data.Sbary,
+                                   self.data.R)
 
         # Ab (M_tris, s_gamma+1, s_gamma+1)
         Ab_mats = np.zeros((M_tris, s_gamma+1, s_gamma+1),

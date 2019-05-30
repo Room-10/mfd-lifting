@@ -4,7 +4,7 @@ import numpy as np
 
 from opymize import Variable
 from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, PositivityFct, \
-                                QuadSupport, EpigraphSupportFct, L1Norms
+                                QuadEpiSupp, EpigraphSupp, L1Norms
 from opymize.linear import BlockOp, IdentityOp, GradientOp, \
                            IndexedMultAdj, MatrixMultR, MatrixMultRBatched
 
@@ -91,8 +91,8 @@ class Model(SublabelModel):
 
         shift = np.tile(self.data.data_b, (M_tris,1,1)).reshape((-1, s_gamma))
         c = 0.5*(shift**2).sum(axis=-1)
-        epifct1 = QuadSupport(M_tris*N_image, s_gamma, b=-shift, c=c)
-        epifct2 = EpigraphSupportFct(np.ones((N_image, L_labels), dtype=bool),
+        epifct1 = QuadEpiSupp(M_tris*N_image, s_gamma, b=-shift, c=c)
+        epifct2 = EpigraphSupp(np.ones((N_image, L_labels), dtype=bool),
             [[np.arange(s_gamma+1)[None]]*M_tris]*N_image,
             self.data.P, self.data.T, np.zeros((N_image, L_labels)))
 
@@ -133,7 +133,7 @@ class Model(SublabelModel):
             F_summands.append(l1norms) # lbd*\sum_ji |g[j,i,:,:]|_nuc
             op_blocks.append([     0,       0,  AdMult]) # g = A'w
         elif self.regularizer == "quadratic":
-            etahat = QuadSupport(M_tris*N_image, s_gamma*d_image, a=self.lbd)
+            etahat = QuadEpiSupp(M_tris*N_image, s_gamma*d_image, a=self.lbd)
             F_summands.append(etahat) # 0.5*lbd*\sum_ji |g1[j,i]|^2/|g2[j,i]|
             AdMult = self.linblocks['Adext']
             Id_w2 = self.linblocks['Id_w2']

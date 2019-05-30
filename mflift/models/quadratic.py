@@ -4,7 +4,8 @@ import numpy as np
 
 from opymize import Variable
 from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, \
-                                PositivityFct, QuadSupport, ConstrainFct
+                                PositivityFct, ConstrainFct, \
+                                QuadEpiSupp, HuberPerspective
 from opymize.linear import BlockOp, IdentityOp, GradientOp, \
                            IndexedMultAdj, MatrixMultR, MatrixMultRBatched
 
@@ -13,10 +14,12 @@ from mflift.models import SublabelModel
 class Model(SublabelModel):
     name = "quadratic"
 
-    def __init__(self, *args, lbd=1.0, **kwargs):
+    def __init__(self, *args, lbd=1.0, alph=np.inf, **kwargs):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
-        logging.info("Init model '%s' (lambda=%.2e)" % (self.name, self.lbd))
+        self.alph = alph
+        logging.info("Init model '%s' (lambda=%.2e, alpha=%.2e)" \
+                     % (self.name, self.lbd, self.alph))
 
         imagedims = self.data.imagedims
         N_image = self.data.N_image
@@ -75,7 +78,11 @@ class Model(SublabelModel):
         AdMult = self.linblocks['Adext']
         Id_w2 = self.linblocks['Id_w2']
 
-        etahat = QuadSupport(M_tris*N_image, s_gamma*d_image, a=self.lbd)
+        if self.alph < np.inf:
+            etahat = HuberPerspective(M_tris*N_image, s_gamma*d_image,
+                                      lbd=self.lbd, alph=self.alph)
+        else:
+            etahat = QuadEpiSupp(M_tris*N_image, s_gamma*d_image, a=self.lbd)
 
         Id_u = IdentityOp(x['u']['size'])
         Id_w12 = IdentityOp(x['w12']['size'])
