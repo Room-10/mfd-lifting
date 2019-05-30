@@ -43,7 +43,7 @@ class DiscretizedManifold(object):
         tdirs = tverts[...,1:] - tverts[...,:1]
         tcoords = np.linalg.solve(tdirs, -tverts[...,0])
         tcoords = np.concatenate((1 - tcoords.sum(axis=-1)[:,:,None], tcoords), axis=-1)
-        mask_01 = np.logical_and(tcoords > -tol, tcoords < 1.0+tol)
+        mask_01 = (tcoords > -tol) & (tcoords < 1.0+tol)
         mask_01 = np.all(mask_01, axis=2)
         indices_01 = [w.nonzero()[0] for w in mask_01]
         outsiders = np.array([i.size == 0 for i in indices_01], dtype=bool)

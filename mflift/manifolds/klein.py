@@ -85,10 +85,10 @@ class KleinBottle(DiscretizedManifold):
         klein_normalize(x)
 
         v, u = 2*x[:,0], x[:,1] + 0.5*np.pi
-        ibot = np.nonzero(np.logical_and(v >=       0, v <   np.pi))[0]
-        imid = np.nonzero(np.logical_and(v >=   np.pi, v < 2*np.pi))[0]
-        itop = np.nonzero(np.logical_and(v >= 2*np.pi, v < 3*np.pi))[0]
-        ihan = np.nonzero(np.logical_and(v >= 3*np.pi, v < 4*np.pi))[0]
+        ibot = np.nonzero((v >=       0) & (v <   np.pi))[0]
+        imid = np.nonzero((v >=   np.pi) & (v < 2*np.pi))[0]
+        itop = np.nonzero((v >= 2*np.pi) & (v < 3*np.pi))[0]
+        ihan = np.nonzero((v >= 3*np.pi) & (v < 4*np.pi))[0]
         result = np.zeros((x.shape[0], 3), dtype=np.float64)
         result[ibot,:] = np.vstack((
             (2.5 + 1.5*np.cos(np.pi - v[ibot]))*np.cos(u[ibot]),
