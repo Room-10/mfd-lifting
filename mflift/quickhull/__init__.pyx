@@ -45,7 +45,7 @@ def piecewise_convexify_1d(points, vals, regions):
     Args:
         points : ndarray of floats, shape (npoints, 1)
         vals : ndarray of floats, shape (nfuns, npoints)
-        regions : ndarray of floats, shape (nregions, nsubpoints)
+        regions : ndarray of ints, shape (nregions, nsubpoints)
 
     Returns:
         base : ndarray of bools, shape (nfuns, npoints)

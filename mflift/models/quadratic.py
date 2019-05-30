@@ -49,7 +49,7 @@ class Model(SublabelModel):
         Id_w2[-1,-1] = 1.0
 
         Adext = np.zeros((M_tris,d_image*s_gamma,d_image*s_gamma+1), order='C')
-        Adext[:,:,:-1] = np.tile(self.data.Ad, (1,d_image,d_image))
+        Adext[:,:,:-1] = np.kron(np.eye(d_image), self.data.Ad)
 
         self.linblocks.update({
             'Grad': GradientOp(imagedims, L_labels),
