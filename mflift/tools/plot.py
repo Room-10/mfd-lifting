@@ -26,9 +26,13 @@ def plot_hue_images(Is, filename=None):
 
 def plot_terrain_maps(Is, dt, filename=None):
     rc('grid', linestyle=':')
-    rc('font', size=8)
-    rc('font', family='serif')
-    fig = plt.figure(figsize=(12, 10), dpi=100)
+    rc('axes', linewidth=0.5)
+    rc('font', size=7, family='serif')
+    rc('xtick', top=True, direction='in')
+    rc('xtick.major', size=2.5, width=0.5)
+    rc('ytick', right=True, direction='in')
+    rc('ytick.major', size=2.5, width=0.5)
+    fig = plt.figure(figsize=(17, 4), dpi=100)
 
     imagedims = Is[0].shape[:-1]
     ccm = loadmat("data/cm_mountain.mat")['ccm']
@@ -46,9 +50,16 @@ def plot_terrain_maps(Is, dt, filename=None):
         Iabs = np.fmax(0, np.einsum('k,ijk->ij', -lightnormal, I))
         col = uuh_col*Iabs[:,:,None]
 
-        ax = fig.add_subplot(200 + 10*len(Is) + (0*len(Is)+i+1), projection='3d')
-        ax.plot_surface(Xuu, Yuu, dt['uu'], facecolors=col)
-        ax.view_init(elev=70., azim=100)
+        ax = fig.add_subplot(100 + 20*len(Is) + (0*len(Is)+i+1))
+        ax.quiver(X, Y, I[:,:,1], I[:,:,0], color='b', headwidth=2.5, headlength=4.2,
+            headaxislength=4.2, width=0.0032, scale=27, minshaft=2)
+        ax.set_xlim((0.7,40.1))
+        ax.set_ylim((0.7,40.4))
+        ax.set_aspect(1.0)
+
+        ax = fig.add_subplot(100 + 20*len(Is) + (1*len(Is)+i+1), projection='3d')
+        ax.plot_surface(Xuu, Yuu, dt['uu'], facecolors=col, shade=False)
+        ax.view_init(elev=75., azim=105)
         ax.xaxis.pane.fill = False
         ax.yaxis.pane.fill = False
         ax.zaxis.pane.fill = False
@@ -59,12 +70,7 @@ def plot_terrain_maps(Is, dt, filename=None):
         ztickmax = int(10*np.floor(dt['uu'].max()/10))
         ax.set_zticks(range(ztickmin, ztickmax+5, 5))
 
-        ax = fig.add_subplot(200 + 10*len(Is) + (1*len(Is)+i+1))
-        ax.quiver(X, Y, I[:,:,1], I[:,:,0], color='b', headwidth=4, headlength=4,
-            headaxislength=4, width=0.002)
-        ax.set_xlim((-0.5,39))
-        ax.set_ylim((-0.5,39))
-
+    fig.subplots_adjust(left=0.02, bottom=0.1, right=1, top=0.9, wspace=0.05, hspace=0)
     if filename is None:
         plt.show()
     else:
