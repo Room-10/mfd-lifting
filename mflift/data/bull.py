@@ -10,14 +10,13 @@ class Data(ManifoldValuedData):
     name = "bull"
     imageh = (1.0,1.0)
     rhoDomain = np.array([[0.0,1.0],[0.0,1.0]])
-    l_dimsubls = 10
     filename = "data/bull-nn.mat"
 
-    def __init__(self, *args, sublabel=True, **kwargs):
-        sph_h = 2*np.pi/5
-        if not sublabel:
-            sph_h = 2*np.pi/45
-            self.l_dimsubls = 2
+    def __init__(self, *args, dimsubls=10, dimres=45, use_hr=False, **kwargs):
+        if use_hr:
+            self.filename = "data/bullhr-nn.mat"
+        self.l_dimsubls = dimsubls
+        sph_h = 2*np.pi/np.ceil(dimres/(dimsubls - 1))
         self.extra = loadmat(self.filename)
         self.imagedims = self.extra['uuh'].shape
         self.d_image = len(self.imagedims)

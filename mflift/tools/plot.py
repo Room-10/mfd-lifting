@@ -56,6 +56,8 @@ def plot_terrain_maps(Is, dt, filename=None):
         ax.set_xlim((0.7,40.1))
         ax.set_ylim((0.7,40.4))
         ax.set_aspect(1.0)
+        ax.invert_xaxis()
+        ax.invert_yaxis()
 
         ax = fig.add_subplot(100 + 20*len(Is) + (1*len(Is)+i+1), projection='3d')
         ax.plot_surface(Xuu, Yuu, dt['uu'], facecolors=col, shade=False)
@@ -96,21 +98,22 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
         verts, subgrid, *curves = map(mfd.embed, [verts,subgrid] + curves)
     x,y,z = np.hsplit(verts, 3)
     mlab.triangular_mesh(x, y, z, simplices,
-        color=(0.8,0.8,0.0), opacity=0.9)
+        color=(1,1,1), opacity=1.0)
 
     verts, simplices = mfd.verts, mfd.simplices
     if hasattr(mfd, "embed"):
         verts = mfd.embed(verts)
-    x,y,z = np.hsplit(verts, 3)
-    mlab.triangular_mesh(x, y, z, simplices,
-        representation='wireframe', color=(0,0,0))
+    #x,y,z = np.hsplit(verts, 3)
+    #mlab.triangular_mesh(x, y, z, simplices,
+    #    representation='wireframe', color=(0,0,0))
+    mlab.points3d(*np.hsplit(verts,3), scale_factor=.1, color=(0,0,0))
 
     if subgrid is not None:
         mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)
 
     for i, crv in enumerate(curves):
         rgb = (1,0,0) if i%2 == 0 else (0,0,1)
-        mlab.plot3d(*np.hsplit(crv,3), color=rgb, tube_radius=.01)
+        mlab.plot3d(*np.hsplit(crv,3), color=rgb, tube_radius=.03)
 
     for crv in np.stack(curves, axis=1):
         mlab.plot3d(*np.hsplit(crv,3), color=(0.5,0.5,0.5), tube_radius=.005)
@@ -118,7 +121,8 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     if filename is None:
         mlab.show()
     else:
-        mlab.savefig(filename, figure=mfig, magnification=2)
+        #mlab.savefig(filename, figure=mfig, magnification=2)
+        pass
 
 def plot_curves_2d(curves, tri, subgrid=None, filename=None):
     """ Plot curves on a triangulated area in the plane """
@@ -129,10 +133,11 @@ def plot_curves_2d(curves, tri, subgrid=None, filename=None):
         plt.scatter(*np.hsplit(subgrid,2), c='#808080', s=10.0, marker='x')
 
     for i,crv in enumerate(curves):
-        plt.plot(*np.hsplit(crv,2), c="r" if i%2 == 0 else "b")
+        col = "r" if i%2 == 0 else "b"
+        plt.plot(*np.hsplit(crv,2), c=col, linewidth=2)
 
     for crv in np.stack(curves, axis=1):
-        plt.plot(*np.hsplit(crv,2), c='#A0A0A0', linestyle="--")
+        plt.plot(*np.hsplit(crv,2), c='#A0A0A0', linestyle="--", linewidth=0.5)
 
     plt.axis('equal')
 
@@ -147,7 +152,8 @@ def plot_curves_2d(curves, tri, subgrid=None, filename=None):
 def plot_polys(verts, polys, facecolors=(1,1,1)):
     collection = PolyCollection([verts[p,::-1] for p in polys])
     collection.set_facecolor(facecolors)
-    collection.set_edgecolor((0.5,0.5,0.5))
+    collection.set_edgecolor((0.8,0.8,0.8))
+    collection.set_linewidth(0.15)
     ax = plt.gca()
     ax.add_collection(collection)
     xmin, xmax = np.amin(verts[:,1]), np.amax(verts[:,1])

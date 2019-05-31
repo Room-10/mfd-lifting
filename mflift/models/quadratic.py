@@ -80,7 +80,7 @@ class Model(SublabelModel):
 
         if self.alph < np.inf:
             etahat = HuberPerspective(M_tris*N_image, s_gamma*d_image,
-                                      lbd=self.lbd*self.alph, alph=self.alph)
+                                      lbd=self.lbd, alph=self.alph)
         else:
             etahat = QuadEpiSupp(M_tris*N_image, s_gamma*d_image, a=self.lbd)
 

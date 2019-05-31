@@ -27,7 +27,7 @@ class Experiment(BaseExperiment):
             return
 
         subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
-        if self.model.name == "rof":
+        if True or self.model.name == "rof":
             subgrid = None
 
         outputs = []

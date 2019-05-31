@@ -4,7 +4,7 @@ import numpy as np
 
 from opymize import Variable
 from opymize.functionals import SplitSum, ZeroFct, IndicatorFct, PositivityFct, \
-                                QuadEpiSupp, EpigraphSupp, L1Norms
+                                QuadEpiSupp, EpigraphSupp, L1Norms, HuberPerspective
 from opymize.linear import BlockOp, IdentityOp, GradientOp, \
                            IndexedMultAdj, MatrixMultR, MatrixMultRBatched
 
@@ -13,10 +13,11 @@ from mflift.models import SublabelModel
 class Model(SublabelModel):
     name = "rof"
 
-    def __init__(self, *args, lbd=1.0, regularizer="tv", **kwargs):
+    def __init__(self, *args, lbd=1.0, regularizer="tv", alph=np.inf, **kwargs):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
         self.regularizer = regularizer
+        self.alph = alph
         logging.info("Init model '%s' (%s regularizer, lambda=%.2e)" \
                      % (self.name, self.regularizer, self.lbd))
 
@@ -133,7 +134,11 @@ class Model(SublabelModel):
             F_summands.append(l1norms) # lbd*\sum_ji |g[j,i,:,:]|_nuc
             op_blocks.append([     0,       0,  AdMult]) # g = A'w
         elif self.regularizer == "quadratic":
-            etahat = QuadEpiSupp(M_tris*N_image, s_gamma*d_image, a=self.lbd)
+            if self.alph < np.inf:
+                etahat = HuberPerspective(M_tris*N_image, s_gamma*d_image,
+                                          lbd=self.lbd, alph=self.alph)
+            else:
+                etahat = QuadEpiSupp(M_tris*N_image, s_gamma*d_image, a=self.lbd)
             F_summands.append(etahat) # 0.5*lbd*\sum_ji |g1[j,i]|^2/|g2[j,i]|
             AdMult = self.linblocks['Adext']
             Id_w2 = self.linblocks['Id_w2']
