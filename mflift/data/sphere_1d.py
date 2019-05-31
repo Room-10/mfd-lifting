@@ -10,14 +10,16 @@ class Data(ManifoldValuedData):
     d_image = 1
     imagedims = (50,)
     imageh = (1.0,)
-    l_dimsubls = 10
     rhoDomain = np.array([[0.0,1.0]])
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, dimsubls=10, dimres=45, **kwargs):
+        self.l_dimsubls = dimsubls
+        sph_h = 2*np.pi/np.ceil(dimres/(dimsubls - 1))
+
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        ManifoldValuedData.__init__(self, Sphere(2*np.pi/5), *args, **kwargs)
+        ManifoldValuedData.__init__(self, Sphere(sph_h), *args, **kwargs)
 
     def curve(self, t):
         return np.hstack((np.cos(3*t*np.pi)*np.sin(0.5*t*np.pi),
