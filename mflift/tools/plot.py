@@ -51,10 +51,17 @@ def plot_terrain_maps(Is, dt, filename=None):
         col = uuh_col*Iabs[:,:,None]
 
         ax = fig.add_subplot(100 + 20*len(Is) + (0*len(Is)+i+1))
-        ax.quiver(X, Y, I[:,:,1], I[:,:,0], color='b', headwidth=2.5, headlength=4.2,
-            headaxislength=4.2, width=0.0032, scale=27, minshaft=2)
-        ax.set_xlim((0.7,40.1))
-        ax.set_ylim((0.7,40.4))
+        xstride = np.int(np.ceil(np.array(imagedims[0])/40))
+        ystride = np.int(np.ceil(np.array(imagedims[1])/40))
+        ax.quiver(X[::ystride,::xstride], Y[::ystride,::xstride],
+                  -I[::ystride,::xstride,1], -I[::ystride,::xstride,0],
+                  color='#1f77b4', # constant color
+                  # optionally: colors by third component
+                  #I[::ystride,::xstride,2], cmap='autumn',
+                  headwidth=2.5, headlength=4.2, headaxislength=4.2,
+                  width=0.0032, scale=27, minshaft=2)
+        ax.set_xlim((0.7,imagedims[1]+0.1))
+        ax.set_ylim((0.7,imagedims[0]+0.4))
         ax.set_aspect(1.0)
         ax.invert_xaxis()
         ax.invert_yaxis()
@@ -70,7 +77,8 @@ def plot_terrain_maps(Is, dt, filename=None):
         ax.set_zlim((dt['uu'].min()-0.5, dt['uu'].max()-1))
         ztickmin = int(10*np.ceil(dt['uu'].min()/10))
         ztickmax = int(10*np.floor(dt['uu'].max()/10))
-        ax.set_zticks(range(ztickmin, ztickmax+5, 5))
+        ztickstride = int(np.ceil((ztickmax - ztickmin)/3))
+        ax.set_zticks(range(ztickmin, ztickmax+ztickstride, ztickstride))
 
     fig.subplots_adjust(left=0.02, bottom=0.1, right=1, top=0.9, wspace=0.05, hspace=0)
     if filename is None:
