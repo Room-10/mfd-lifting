@@ -53,7 +53,7 @@ class Experiment(BaseExperiment):
                 I = self.data.I.reshape(self.data.imagedims + (3,))
                 Iu = u_proj.reshape(self.data.imagedims + (3,))
                 plot_terrain_maps([I,Iu], self.data.extra, filename=f)
-            elif self.data.d_image == 2 and self.data.name == "hue":
+            elif self.data.d_image == 2 and self.data.mfd.ndim == 1:
                 I = self.data.I.reshape(self.data.imagedims)
                 Iu = u_proj.reshape(self.data.imagedims)
                 plot_hue_images([I,Iu], filename=f)

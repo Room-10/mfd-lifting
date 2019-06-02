@@ -69,7 +69,7 @@ inline bool is_base_face(size_t *f, double *v, char *b, double *n, double c) {
     return fn[DIM-1] < -TOL;
 }
 
-std::vector<size_t> getConvexHull(double *verts, size_t nverts, char *base)
+std::vector<size_t> getConvexHull2D(double *verts, size_t nverts, char *base)
 {
     quickhull::QuickHull<double> qh;
     std::vector<size_t> hull;
@@ -111,4 +111,33 @@ std::vector<size_t> getConvexHull(double *verts, size_t nverts, char *base)
     }
 
     return hullf;
+}
+
+void getConvexHull1D(double *graph, size_t npoints, char *base)
+{
+    size_t i, m, best_m;
+    long double slope, best_slope;
+
+    for (m = 0; m < npoints; m++) {
+        base[m] = 1;
+    }
+
+    i = 0;
+    while (i < npoints-1) {
+        best_slope = INFINITY;
+        best_m = i+1;
+        for (m = i+1; m < npoints; m++) {
+            slope = (graph[m*2 + 1] - graph[i*2 + 1])
+                   /(graph[m*2 + 0] - graph[i*2 + 0]);
+            slope = 1e-14*roundl(1e14*slope);
+            if (slope <= best_slope) {
+                best_m = m;
+                best_slope = slope;
+            }
+        }
+        for (m = i+1; m < best_m; m++) {
+            base[m] = 0;
+        }
+        i = best_m;
+    }
 }

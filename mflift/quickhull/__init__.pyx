@@ -2,7 +2,7 @@
 import numpy as np
 cimport numpy as np
 
-from convexhull cimport getConvexHull
+from convexhull cimport getConvexHull1D, getConvexHull2D
 from libcpp.vector cimport vector
 
 def piecewise_convexify(points, vals, regions):
@@ -39,7 +39,9 @@ def piecewise_convexify(points, vals, regions):
     else:
         return piecewise_convexify_2d(points, vals, regions)
 
-def piecewise_convexify_1d(points, vals, regions):
+def piecewise_convexify_1d(np.ndarray[np.float64_t, ndim=2] points,
+                           np.ndarray[np.float64_t, ndim=2] vals,
+                           np.ndarray[np.int64_t, ndim=2] regions):
     """ Convexify piecewise affine 1-d functions on given subintervals
 
     Args:
@@ -51,45 +53,35 @@ def piecewise_convexify_1d(points, vals, regions):
         base : ndarray of bools, shape (nfuns, npoints)
         faces : nfuns lists of nregions arrays of ints, shape (nfaces,2) each
     """
-    npoints, ndim = points.shape
-    nfuns, npoints = vals.shape
-    nregions, nsubpoints = regions.shape
-    assert ndim == 1
+    cdef np.ndarray[np.float64_t, ndim=2] graph
+    cdef np.ndarray[np.int8_t, ndim=2] base
+    cdef np.ndarray[np.int8_t, ndim=1] base_ij
 
-    base = np.zeros((nfuns, npoints), dtype=bool)
+    nregions = regions.shape[0]
+    nsubpoints = regions.shape[1]
+    nfuns = vals.shape[0]
+    npoints = vals.shape[1]
+    assert points.shape[1] == 1
+
+    graph = np.empty((nsubpoints, 2), dtype=np.float64, order='C')
+    base = np.zeros((nfuns, npoints), dtype=np.int8, order='C')
+    base_ij = np.empty((nsubpoints,), dtype=np.int8, order='C')
     faces = [[] for i in range(nfuns)]
-    for i in range(nfuns):
-        for j in range(nregions):
-            subpoints = points[regions[j],0]
-            subvals = vals[i,regions[j]]
-            ordered = subpoints.argsort()
-            base_ij = convexify_1d(subpoints[ordered], subvals[ordered])
-            base[i,regions[j,ordered]] = base_ij
-            idx = ordered[base_ij]
+
+    for j in range(nregions):
+        graph[:,0] = points[regions[j],0]
+        ordered = graph[:,0].argsort()
+        graph[:,0] = graph[ordered,0]
+        regj_ordered = regions[j,ordered]
+        for i in range(nfuns):
+            graph[:,1] = vals[i,regj_ordered]
+            getConvexHull1D(<double*>graph.data,
+                            nsubpoints,
+                            <char*>base_ij.data)
+            base[i,regj_ordered] = base_ij
+            idx = ordered[base_ij.astype(bool)]
             faces[i].append(np.array([idx[i:i+2] for i in range(len(idx)-1)]))
-    return base, faces
-
-def convexify_1d(points, vals):
-    """ Convexify piecewise affine 1-d function
-
-    Args:
-        points : ndarray of floats, shape (npoints,)
-            Assumed to be in ascending order.
-        vals : ndarray of floats, shape (npoints,)
-            Function values corresponding to given points
-
-    Returns:
-        ndarray of bools, shape (npoints,)
-    """
-    npoints = points.size
-    base = np.ones((npoints,), dtype=bool)
-    i = 0
-    while i < npoints-1:
-        m = np.around((vals[i+1:] - vals[i])/(points[i+1:] - points[i]), 14)
-        j = i + m.size - m[::-1].argmin()
-        base[i+1:j] = False
-        i = j
-    return base
+    return base.astype(bool), faces
 
 def piecewise_convexify_2d(np.ndarray[np.float64_t, ndim=2] points,
                            np.ndarray[np.float64_t, ndim=2] vals,
@@ -134,9 +126,9 @@ def piecewise_convexify_2d(np.ndarray[np.float64_t, ndim=2] points,
         for i in range(nfuns):
             for j in range(nsubpoints):
                 graph[j,2] = vals[i,tri[j]]
-            hull = getConvexHull(<double*>graph.data,
-                                 graph.shape[0],
-                                 <char*>base_ij.data)
+            hull = getConvexHull2D(<double*>graph.data,
+                                   graph.shape[0],
+                                   <char*>base_ij.data)
             hulla = np.empty((hull.size()/3,3), dtype=np.int64, order='C')
             for k in range(hull.size()/3):
                 hulla[k,:] = hull[3*k:3*k+3]

@@ -5,4 +5,5 @@ cdef extern from "convexhull.cpp":
     pass
 
 cdef extern from "convexhull.h":
-    vector[size_t] getConvexHull(double *verts, size_t nverts, char *base)
+    void getConvexHull1D(double *graph, size_t npoints, char *base)
+    vector[size_t] getConvexHull2D(double *verts, size_t nverts, char *base)
