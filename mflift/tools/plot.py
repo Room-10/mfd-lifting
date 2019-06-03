@@ -11,12 +11,16 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def plot_hue_images(Is, filename=None):
-    fig = plt.figure(figsize=(10, 10), dpi=100)
+    rc('font', size=7, family='serif')
+    rc('xtick.major', size=2.5, width=0.5)
+    rc('ytick.major', size=2.5, width=0.5)
+    fig = plt.figure(figsize=(10.7,5), dpi=100)
 
     for i,I in enumerate(Is):
         ax = fig.add_subplot(100 + 10*len(Is) + (i+1))
         ax.imshow(I, vmin=0, vmax=2*np.pi, cmap='hsv')
 
+    fig.subplots_adjust(left=0.04, bottom=0.05, right=0.99, top=0.99, wspace=0.07, hspace=0)
     if filename is None:
         plt.show()
     else:
