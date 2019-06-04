@@ -24,7 +24,7 @@ class Data(ManifoldValuedData):
     def curve(self, t):
         vals = np.hstack(((-1.3 + 1.2*t)*np.pi,
                           (-0.3 + 0.5*t),))
-        noise = 0.05*np.random.normal(size=vals.shape)
+        noise = 0.2*np.random.normal(size=vals.shape)
         return klein_normalize(vals + noise)
 
     def rho_x(self, x, z):

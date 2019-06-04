@@ -76,6 +76,13 @@ class Sphere(DiscretizedManifold):
         np.einsum('ikm,ilm->ikl', x, y, out=out)
         out[:]= np.arccos(np.clip(out, -1.0, 1.0))
 
+    def embed(self, x):
+        return x
+
+    def geodesic(self, x, y, N):
+        t = np.linspace(0.0, 1.0, N)
+        return normalize((1 - t[:,None])*x[None] + t[:,None]*y[None])
+
 def sphmesh_tetrahedron():
     """ Spherical regular tetrahedron (4 vertices, 4 triangles).
 

@@ -76,6 +76,10 @@ class Moebius(DiscretizedManifold):
                                              x[:,1]*np.sin(x[:,0]/2.0),)).T
         return result if multi else result[0]
 
+    def geodesic(self, x, y, N):
+        t = np.linspace(0.0, 1.0, N)
+        return moeb_normalize(x[None] + t[:,None]*self.log(x, y)[None])
+
 def moeb_normalize(x):
     """ Normalizes values (phi, t) such that always 0 <= phi < 2 PI (in place)
 
