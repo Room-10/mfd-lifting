@@ -47,24 +47,16 @@ class KleinBottle(DiscretizedManifold):
 
     def _log(self, location, pfrom, out):
         [klein_normalize(v.reshape(-1,2)) for v in [location, pfrom]]
-        diff = out.copy()
-        curd = np.zeros(out.shape[:-1])
-        bestd = curd.copy()
-        bestd.fill(np.inf)
-        for tofs in [-1,0,1]:
-            for phiofs in [2*np.pi,0,2*np.pi]:
-                xk = pfrom.copy()
-                if tofs != 0:
-                    xk[:,:,0] += tofs*2*np.pi
-                    xk[:,:,1] *= -1
-                xk[:,:,1] += phiofs
-                diff[:] = xk[:,None] - location[:,:,None]
-                curd[:] = np.linalg.norm(diff, axis=-1)
-                ind = (curd < bestd)
-                out[ind,:] = diff[ind,:]
-                bestd[:] = np.fmin(bestd, curd)
+        xk = np.tile(pfrom, (3,3,1,1,1))
+        xk[...,0] += 2*np.pi*np.array([-1, 0, 1])[   :,None,None,None]
+        xk[...,1] *=         np.array([-1, 1,-1])[   :,None,None,None]
+        xk[...,1] += 2*np.pi*np.array([-1, 0, 1])[None,   :,None,None]
+        diff = xk[:,:,:,None] - location[None,None,:,:,None]
+        argmin = np.linalg.norm(diff, axis=-1).reshape(9,-1).argmin(axis=0)
+        out.reshape(-1)[:] = diff.reshape(9,-1)[argmin,range(argmin.size)]
 
     def _exp(self, location, vfrom, out):
+        klein_normalize(location.reshape(-1,2))
         out[:] = location[:,:,None] + vfrom[:,None]
         klein_normalize(out.reshape(-1,2))
 

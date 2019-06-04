@@ -46,6 +46,7 @@ class Moebius(DiscretizedManifold):
         return verts, simplices
 
     def _log(self, location, pfrom, out):
+        [moeb_normalize(v.reshape(-1,2)) for v in [location, pfrom]]
         out[:] = pfrom[:,None] - location[:,:,None]
         fact1 = np.heaviside(out[...,0] - np.pi, 0)
         fact2 = np.heaviside(-out[...,0] - np.pi, 0)
@@ -53,6 +54,7 @@ class Moebius(DiscretizedManifold):
         out[...,1] -= (fact1 + fact2)*pfrom[:,None,:,1]
 
     def _exp(self, location, vfrom, out):
+        moeb_normalize(location.reshape(-1,2))
         out[:] = location[:,:,None] + vfrom[:,None]
         moeb_normalize(out.reshape(-1,2))
 
