@@ -15,15 +15,33 @@ class Sphere(DiscretizedManifold):
         Args:
             h : maximal length of edges in the triangulation
             verts : ndarray of floats, shape (npoints, 3)
+                or one of ["icosahedron", "octahedron", "tetrahedron"]
+                or `None` to automatically find best fit for given `h`
         """
         if verts is None:
+            if h >= (8/3)**0.5:
+                verts = "tetrahedron"
+            elif h >= 2**0.5:
+                verts = "octahedron"
+            else:
+                verts = "icosahedron"
+
+        if verts == "icosahedron":
+            # h = 1.0514...
             self.verts, self.simplices = sphmesh_icosahedron()
+        elif verts == "octahedron":
+            # h = 2**0.5 = 1.4142...
+            self.verts, self.simplices = sphmesh_octahedron()
+        elif verts == "tetrahedron":
+            # h = (8/3)**0.5 = 1.6329...
+            self.verts, self.simplices = sphmesh_tetrahedron()
         else:
             assert verts.shape[1] == 3
             self.verts = normalize(verts)
             sv = SphericalVoronoi(self.verts)
             sv.sort_vertices_of_regions()
             self.simplices = np.ascontiguousarray(sv._tri.simplices)
+
         DiscretizedManifold.__init__(self, h)
 
     def mesh(self, h):
@@ -31,7 +49,8 @@ class Sphere(DiscretizedManifold):
         diffs = np.stack((triverts[:,1] - triverts[:,0],
                           triverts[:,2] - triverts[:,0],
                           triverts[:,2] - triverts[:,1],), axis=1)
-        rep = max(0, np.ceil(np.log2(np.linalg.norm(diffs, axis=-1).max()/h)))
+        maxedgelen = np.linalg.norm(diffs, axis=-1).max()
+        rep = max(0, np.ceil(np.log2(maxedgelen/h)))
         return sphmesh_refine(self.verts, self.simplices, repeat=rep)
 
     def _log(self, location, pfrom, out):
@@ -56,6 +75,67 @@ class Sphere(DiscretizedManifold):
     def _dist(self, x, y, out):
         np.einsum('ikm,ilm->ikl', x, y, out=out)
         out[:]= np.arccos(np.clip(out, -1.0, 1.0))
+
+def sphmesh_tetrahedron():
+    """ Spherical regular tetrahedron (4 vertices, 4 triangles).
+
+    Returns:
+        verts : ndarray of floats, shape (4,3)
+            Each row corresponds to a point on the unit sphere.
+        tris : ndarray of floats, shape (4,3)
+            Each row defines a triangle through indices into `verts`.
+    """
+    Y = 2**0.5
+    X = 3**0.5
+
+    verts = np.array([
+        [   0,      0,    1],
+        [   0,  2/3*Y, -1/3],
+        [ Y/X, -1/3*Y, -1/3],
+        [-Y/X, -1/3*Y, -1/3],
+    ], dtype=np.float64)
+
+    tris = np.array([
+        [ 0,  1,  2],
+        [ 0,  2,  3],
+        [ 0,  3,  1],
+        [ 1,  2,  3],
+    ])
+
+    return normalize(verts), tris
+
+def sphmesh_octahedron():
+    """ Spherical regular octahedron (6 vertices, 8 triangles).
+
+    Returns:
+        verts : ndarray of floats, shape (6,3)
+            Each row corresponds to a point on the unit sphere.
+        tris : ndarray of floats, shape (8,3)
+            Each row defines a triangle through indices into `verts`.
+    """
+    X = 0.5*(2**0.5)
+
+    verts = np.array([
+        [ 0,  0,  1],
+        [ 0,  0, -1],
+        [ X,  X,  0],
+        [-X,  X,  0],
+        [-X, -X,  0],
+        [ X, -X,  0],
+    ], dtype=np.float64)
+
+    tris = np.array([
+        [ 0,  2,  3],
+        [ 0,  3,  4],
+        [ 0,  4,  5],
+        [ 0,  5,  2],
+        [ 1,  2,  3],
+        [ 1,  3,  4],
+        [ 1,  4,  5],
+        [ 1,  5,  2],
+    ])
+
+    return normalize(verts), tris
 
 def sphmesh_icosahedron():
     """ Spherical regular icosahedron (12 vertices, 20 triangles).

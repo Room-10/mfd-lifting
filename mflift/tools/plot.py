@@ -109,8 +109,7 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     if hasattr(mfd, "embed"):
         verts, subgrid, *curves = map(mfd.embed, [verts,subgrid] + curves)
     x,y,z = np.hsplit(verts, 3)
-    mlab.triangular_mesh(x, y, z, simplices,
-        color=(1,1,1), opacity=1.0)
+    mlab.triangular_mesh(x, y, z, simplices, color=(1,1,1), opacity=0.8)
 
     verts, simplices = mfd.verts, mfd.simplices
     if hasattr(mfd, "embed"):

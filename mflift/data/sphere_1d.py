@@ -22,6 +22,7 @@ class Data(ManifoldValuedData):
         ManifoldValuedData.__init__(self, Sphere(sph_h), *args, **kwargs)
 
     def curve(self, t):
+        t = 4/3*(1 - (1 - 0.5*t)**2) + 0.3
         return np.hstack((np.cos(3*t*np.pi)*np.sin(0.5*t*np.pi),
                           np.sin(3*t*np.pi)*np.sin(0.5*t*np.pi),
                           np.cos(0.5*t*np.pi)))
