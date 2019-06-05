@@ -12,22 +12,25 @@ class Moebius(DiscretizedManifold):
 
         Args:
             h : float or pair of floats
-                Step widths in width and angular components of the strip.
+                Step widths in angular and width components of the strip.
         """
         if np.isscalar(h):
             h = (h,h)
         assert len(h) == 2
-        tres = max(2, int(np.ceil(1 + 1.0/h[0])))
-        phires = max(2, int(np.ceil(2*np.pi/h[1])))
+        phires = max(2, int(np.ceil(2*np.pi/h[0])))
+        tres = max(2, int(np.ceil(1 + 1.0/h[1])))
 
-        th = 1.0/(tres - 1)
         phih = 2*np.pi/phires
-        t, phi = np.meshgrid(np.linspace(-0.5, 0.5, tres),
-                             np.arange(0, 2*np.pi, phih))
+        th = 1.0/(tres - 1)
+        phi, t = np.meshgrid(np.arange(0, 2*np.pi, phih),
+                             np.linspace(-0.5, 0.5, tres),
+                             indexing='ij')
         v = np.vstack((phi.ravel(order='C'), t.ravel(order='C'))).T
         verts = np.ascontiguousarray(v)
 
-        ti, phii = np.meshgrid(np.arange(0, tres - 1), np.arange(0, phires))
+        phii, ti = np.meshgrid(np.arange(0, phires),
+                               np.arange(0, tres - 1),
+                               indexing='ij')
         phi00, t00 = moeb_idx_normalize(phii + 0, ti + 0, phires, tres)
         phi10, t10 = moeb_idx_normalize(phii + 1, ti + 0, phires, tres)
         phi01, t01 = moeb_idx_normalize(phii + 0, ti + 1, phires, tres)
@@ -47,11 +50,12 @@ class Moebius(DiscretizedManifold):
 
     def _log(self, location, pfrom, out):
         [moeb_normalize(v.reshape(-1,2)) for v in [location, pfrom]]
-        out[:] = pfrom[:,None] - location[:,:,None]
-        fact1 = np.heaviside(out[...,0] - np.pi, 0)
-        fact2 = np.heaviside(-out[...,0] - np.pi, 0)
-        out[...,0] -= (fact1 - fact2)*2*np.pi
-        out[...,1] -= (fact1 + fact2)*pfrom[:,None,:,1]
+        xk = np.tile(pfrom, (3,1,1,1))
+        xk[...,0] += 2*np.pi*np.array([-1, 0, 1])[   :,None,None]
+        xk[...,1] *=         np.array([-1, 1,-1])[   :,None,None]
+        diff = xk[:,:,None] - location[None,:,:,None]
+        argmin = np.linalg.norm(diff, axis=-1).reshape(3,-1).argmin(axis=0)
+        out.reshape(-1,2)[:] = diff.reshape(3,-1,2)[argmin,range(argmin.size),:]
 
     def _exp(self, location, vfrom, out):
         moeb_normalize(location.reshape(-1,2))
@@ -73,9 +77,13 @@ class Moebius(DiscretizedManifold):
         multi = (x.ndim == 2)
         x = x if multi else x[None]
         moeb_normalize(x)
-        result = np.vstack((np.cos(x[:,0]) + x[:,1]*np.cos(x[:,0]/2.0),
-                            np.sin(x[:,0]) + x[:,1]*np.cos(x[:,0]/2.0),
-                                             x[:,1]*np.sin(x[:,0]/2.0),)).T
+        phi, t = x[:,0], x[:,1]
+        result = np.vstack((np.cos(phi) + t*np.cos(phi/2.0),
+                            np.sin(phi) + t*np.cos(phi/2.0),
+                                          t*np.sin(phi/2.0),)).T
+        result = np.vstack((np.cos(phi)*(1 + t*np.cos(phi/2.0)),
+                            np.sin(phi)*(1 + t*np.cos(phi/2.0)),
+                                             t*np.sin(phi/2.0),)).T
         return result if multi else result[0]
 
     def geodesic(self, x, y, N):

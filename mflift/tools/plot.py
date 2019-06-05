@@ -105,36 +105,48 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
         mlab.options.offscreen = True
     mfig = mlab.figure(size=(1024, 1024))
 
-    crv = []
-    for i in range(curves[1].shape[0] - 1):
-        crv.append(mfd.geodesic(curves[1][i], curves[1][i+1], 10))
-    curves.append(np.concatenate(crv, axis=0))
-    for crv in np.stack(curves[:2], axis=1):
-        curves.append(mfd.geodesic(crv[0], crv[1], 10))
-
     verts, simplices = mfd.mesh(0.2)
-    if hasattr(mfd, "embed"):
-        verts, *curves = map(mfd.embed, [verts] + curves)
-        subgrid = None if subgrid is None else mfd.embed(subgrid)
+    verts = mfd.embed(verts) if hasattr(mfd, "embed") else verts
     x,y,z = np.hsplit(verts, 3)
     mlab.triangular_mesh(x, y, z, simplices, color=(1,1,1), opacity=0.8)
 
     verts, simplices = mfd.verts, mfd.simplices
-    if hasattr(mfd, "embed"):
-        verts = mfd.embed(verts)
-    #x,y,z = np.hsplit(verts, 3)
-    #mlab.triangular_mesh(x, y, z, simplices,
-    #    representation='wireframe', color=(0,0,0))
+    verts = mfd.embed(verts) if hasattr(mfd, "embed") else verts
     mlab.points3d(*np.hsplit(verts,3), scale_factor=.1, color=(0,0,0))
+
+    pointcurves = []
+    orthcurves = []
+    if len(curves) > 2:
+        pointcurves = curves[:-1]
+        curves = curves[-1:]
+    else:
+        for crv in np.stack(curves, axis=1):
+            orthcurves.append(mfd.geodesic(crv[0], crv[1], 10))
+
+    for k in range(len(curves)):
+        crv = []
+        for i in range(curves[k].shape[0] - 1):
+            crv.append(mfd.geodesic(curves[k][i], curves[k][i+1], 10))
+        curves[k] = np.concatenate(crv, axis=0)
+
+    if hasattr(mfd, "embed"):
+        subgrid = None if subgrid is None else mfd.embed(subgrid)
+        curves = [mfd.embed(c) for c in curves]
+        orthcurves = [mfd.embed(c) for c in orthcurves]
+        pointcurves = [mfd.embed(c) for c in pointcurves]
 
     if subgrid is not None:
         mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)
 
-    mlab.points3d(*np.hsplit(curves[0],3), color=(1,0,0), scale_factor=.2)
-    mlab.plot3d(*np.hsplit(curves[2],3), color=(0,0,1), tube_radius=.03)
+    if len(curves) > 1:
+        mlab.plot3d(*np.hsplit(curves[-2],3), color=(1,0,0), tube_radius=.03)
+    for c in pointcurves:
+        mlab.points3d(*np.hsplit(c,3), color=(1,0,0), scale_factor=.1)
 
-    for crv in curves[3:]:
-        mlab.plot3d(*np.hsplit(crv,3), color=(0.5,0.5,0.5), tube_radius=.005)
+    mlab.plot3d(*np.hsplit(curves[-1],3), color=(0,0,1), tube_radius=.03)
+
+    for c in orthcurves:
+        mlab.plot3d(*np.hsplit(c,3), color=(0.5,0.5,0.5), tube_radius=.005)
 
     if filename is None:
         mlab.show()

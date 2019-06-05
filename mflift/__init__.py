@@ -30,19 +30,23 @@ class Experiment(BaseExperiment):
             N_image = self.data.N_image
             res_x =  self.model.x.vars(self.result['data'][0], True)
             u_proj = self.model.proj(res_x['u'])
-            curves = [self.data.curve(self.data.rhoGrid), u_proj]
+            curves = self.data.I + [u_proj]
             verts = self.data.T
             N_inter = 10
+            N_crv = len(curves)
 
             crvs = np.stack(list(map(mfd.embed, curves)), axis=1)
             txtf = os.path.join(self.output_dir, "curves.txt")
+            header = ["x{0} y{0} z{0}".format(i) for i in range(N_crv)]
             np.savetxt(txtf, crvs.reshape(crvs.shape[0],-1),
-                       header="x0 y0 z0 x1 y1 z1", comments="")
+                       header=" ".join(header), comments="")
 
-            crv = np.zeros((N_inter, N_image, 3), dtype=np.float64)
-            for k,c in enumerate(curves):
-                crv[:,k,:] = mfd.embed(mfd.geodesic(c[0], c[1], N_inter))
-            header = ["x{0} y{0} z{0}".format(i) for i in range(crv.shape[1])]
+            crv = np.zeros((N_inter, N_crv-1, N_image, 3), dtype=np.float64)
+            c1 = curves[-1]
+            for k,c in enumerate(curves[:-1]):
+                for i in range(N_image):
+                    crv[:,k,i,:] = mfd.embed(mfd.geodesic(c[i], c1[i], N_inter))
+            header = ["x{0} y{0} z{0}".format(i) for i in range((N_crv-1)*N_image)]
             txtf = os.path.join(self.output_dir, "curveorths.txt")
             np.savetxt(txtf, crv.reshape(N_inter, -1),
                        header=" ".join(header), comments="")
@@ -88,8 +92,7 @@ class Experiment(BaseExperiment):
             res_x =  self.model.x.vars(res['data'][0], True)
             u_proj = self.model.proj(res_x['u'])
             if self.data.d_image == 1:
-                crv = self.data.curve(self.data.rhoGrid)
-                plot_curves([crv, u_proj], self.data.mfd,
+                plot_curves(self.data.I + [u_proj], self.data.mfd,
                     subgrid=subgrid, filename=f)
             elif self.data.d_image == 2 and self.data.name[:4] == "bull":
                 I = self.data.I.reshape(self.data.imagedims + (3,))

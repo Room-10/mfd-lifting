@@ -19,13 +19,13 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
+        self.I = [self.curve(self.rhoGrid) for k in range(5)]
         ManifoldValuedData.__init__(self, Moebius(phi_h), *args, **kwargs)
 
     def curve(self, t):
-        vals = np.hstack(((-1.3 + 1.2*t)*np.pi,
-                          (-0.3 + 0.5*t),))
-        noise = 0.05*np.random.normal(size=vals.shape)
+        vals = np.hstack(((-1.1 + 0.7*t)*np.pi, (-0.1 + 0.2*t),))
+        noise = 0.2*np.random.normal(size=vals.shape)
         return moeb_normalize(vals + noise)
 
-    def rho_x(self, x, z):
-        return 0.5*self.mfd.dist(self.curve(x)[None], z[None])[0]**2
+    def rho(self, z):
+        return -sum([0.5*self.mfd.dist(I[None], z[None])[0]**2 for I in self.I])

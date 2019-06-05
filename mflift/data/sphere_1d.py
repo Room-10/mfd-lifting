@@ -19,6 +19,7 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
+        self.I = [self.curve(self.rhoGrid)]
         ManifoldValuedData.__init__(self, Sphere(sph_h), *args, **kwargs)
 
     def curve(self, t):
@@ -27,5 +28,5 @@ class Data(ManifoldValuedData):
                           np.sin(3*t*np.pi)*np.sin(0.5*t*np.pi),
                           np.cos(0.5*t*np.pi)))
 
-    def rho_x(self, x, z):
-        return 0.5*self.mfd.dist(self.curve(x)[None], z[None])[0]**2
+    def rho(self, z):
+        return 0.5*self.mfd.dist(self.I[0][None], z[None])[0]**2

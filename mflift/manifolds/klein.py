@@ -12,22 +12,25 @@ class KleinBottle(DiscretizedManifold):
 
         Args:
             h : float or pair of floats
-                Step widths in radial and axial components of the strip.
+                Step widths in axial and radial components of the surface.
         """
         if np.isscalar(h):
             h = (h,h)
         assert len(h) == 2
-        tres = max(2, int(np.ceil(2*np.pi/h[0])))
-        phires = max(2, int(np.ceil(2*np.pi/h[1])))
+        phires = max(2, int(np.ceil(2*np.pi/h[0])))
+        tres = max(2, int(np.ceil(2*np.pi/h[1])))
 
-        th = 2*np.pi/tres
         phih = 2*np.pi/phires
-        t, phi = np.meshgrid(np.arange(0, 2*np.pi, th),
-                             np.arange(0, 2*np.pi, phih))
+        th = 2*np.pi/tres
+        phi, t = np.meshgrid(np.arange(0, 2*np.pi, phih),
+                             np.arange(-np.pi, np.pi, th),
+                             indexing='ij')
         v = np.vstack((phi.ravel(order='C'), t.ravel(order='C'))).T
         verts = np.ascontiguousarray(v)
 
-        ti, phii = np.meshgrid(np.arange(0, tres), np.arange(0, phires))
+        phii, ti = np.meshgrid(np.arange(0, phires),
+                               np.arange(0, tres),
+                               indexing='ij')
         phi00, t00 = klein_idx_normalize(phii + 0, ti + 0, phires, tres)
         phi10, t10 = klein_idx_normalize(phii + 1, ti + 0, phires, tres)
         phi01, t01 = klein_idx_normalize(phii + 0, ti + 1, phires, tres)
@@ -53,7 +56,7 @@ class KleinBottle(DiscretizedManifold):
         xk[...,1] += 2*np.pi*np.array([-1, 0, 1])[None,   :,None,None]
         diff = xk[:,:,:,None] - location[None,None,:,:,None]
         argmin = np.linalg.norm(diff, axis=-1).reshape(9,-1).argmin(axis=0)
-        out.reshape(-1)[:] = diff.reshape(9,-1)[argmin,range(argmin.size)]
+        out.reshape(-1,2)[:] = diff.reshape(9,-1,2)[argmin,range(argmin.size),:]
 
     def _exp(self, location, vfrom, out):
         klein_normalize(location.reshape(-1,2))
@@ -76,7 +79,7 @@ class KleinBottle(DiscretizedManifold):
         x = x if multi else x[None]
         klein_normalize(x)
 
-        v, u = 2*x[:,0], x[:,1] + 0.5*np.pi
+        v, u = 2*x[:,0], x[:,1] + 1.5*np.pi
         ibot = np.nonzero((v >=       0) & (v <   np.pi))[0]
         imid = np.nonzero((v >=   np.pi) & (v < 2*np.pi))[0]
         itop = np.nonzero((v >= 2*np.pi) & (v < 3*np.pi))[0]
@@ -105,17 +108,18 @@ class KleinBottle(DiscretizedManifold):
         return klein_normalize(x[None] + t[:,None]*self.log(x, y)[None])
 
 def klein_normalize(x):
-    """ Normalizes values (phi, t) such that always 0 <= phi,t < 2*pi (in place)
+    """ Normalizes values (phi, t) such that always 0 <= phi < 2*pi (in place)
 
+        t = (t + pi)%(2*pi) - pi
         (phi, t) -> (phi - 2*pi, -t)
         (phi, t) -> (phi + 2*pi, -t)
-        t %= 2*pi
 
     Args:
         x : ndarray of floats, shape (npoints, 2)
     """
     multi = (x.ndim == 2)
     x = x if multi else x[None]
+    x[:,1] = (x[:,1] + np.pi)%(2*np.pi) - np.pi
     while True:
         ind1 = np.nonzero(x[:,0] >= 2*np.pi)
         x[ind1,0] -= 2*np.pi
@@ -125,7 +129,6 @@ def klein_normalize(x):
         x[ind2,1] *= -1
         if ind1[0].size == 0 and ind2[0].size == 0:
             break
-    x[:,1] %= 2*np.pi
     return x if multi else x[0]
 
 def klein_idx_normalize(phiind, tind, phires, tres):
