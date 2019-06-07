@@ -1,3 +1,6 @@
 [submodule "mflift/quickhull/src"]
-	path = mflift/quickhull/src
+	path = mflift/quickhull/quickhull_src
 	url = https://github.com/akuukka/quickhull
+[submodule "mflift/quickhull/qhull_src"]
+	path = mflift/quickhull/qhull_src
+	url = https://github.com/qhull/qhull
