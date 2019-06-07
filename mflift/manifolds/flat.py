@@ -45,10 +45,45 @@ class FlatManifold(DiscretizedManifold):
         # The assumption of convexity is crucial here!
         out[:] = np.linalg.norm(x[:,:,None] - y[:,None], axis=-1)
 
+class Cube(FlatManifold):
+    """ Evenly triangulate a cubical area around the origin
+
+    >>> mfd = Cube(width, l)
+    >>> # width : width of the cubical area
+    >>> # l : number of grid points per direction
+    """
+    def __init__(self, width, l):
+        assert l > 1
+        self.n_dimlabels = l
+        self.delta = width/(l-1)
+        verts = np.zeros((l*l*l, 3), dtype=np.float64)
+        verts[:] = np.mgrid[0:l,0:l,0:l].transpose((1,2,3,0)).reshape(-1,3)
+        verts[:] = self.delta*verts - width/2
+
+        nsimplices = 4*(l - 1)**3
+        tris = np.zeros((nsimplices, 4), dtype=np.int64, order='C')
+        i = np.arange(l-1)
+        i1, i2, i3 = i[None,:,:], i[:,None,:], i[:,:,None]
+        k = (4*((l-1)**2*i1 + (l-1)*i2 + i3)).ravel()
+        tris[k + 0,:] = np.vstack([idx.ravel() for idx in
+            [l**2* i1    + l* i2    +  i3   , l**2*(i1+1) + l* i2    +  i3   ,
+             l**2* i1    + l*(i2+1) +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
+        tris[k + 1,:] = np.vstack([idx.ravel() for idx in
+            [l**2*(i1+1) + l*(i2+1) +  i3   , l**2*(i1+1) + l*(i2+1) + (i3+1),
+             l**2* i1    + l*(i2+1) +  i3   , l**2*(i1+1) + l* i2    +  i3   ,]]).T
+        tris[k + 2,:] = np.vstack([idx.ravel() for idx in
+            [l**2* i1    + l*(i2+1) + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
+             l**2* i1    + l*(i2+1) +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
+        tris[k + 3,:] = np.vstack([idx.ravel() for idx in
+            [l**2*(i1+1) + l* i2    + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
+             l**2*(i1+1) + l* i2    +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
+
+        FlatManifold.__init__(self, verts, simplices=tris)
+
 class Square(FlatManifold):
     """ Evenly triangulate a quadratic area around the origin
 
-    >>> tri = SquareTriangulation(width, l)
+    >>> mfd = Square(width, l)
     >>> # width : width of the quadratic area
     >>> # l : number of grid points per direction
     """
@@ -74,7 +109,7 @@ class Square(FlatManifold):
 class Disk(FlatManifold):
     """ Evenly triangulate a circular area around the origin
 
-    >>> tri = DiskTriangulation(width, l)
+    >>> mfd = Disk(width, l)
     >>> # width : diameter of the largest disk that fits completely inside
     >>> #         the triangulated area (2*apothem)
     >>> # l : approximate number of grid points per direction
@@ -102,7 +137,7 @@ class Disk(FlatManifold):
 class Interval(FlatManifold):
     """ Evenly partition an interval around the origin
 
-    >>> tri = Triangulation1D(width, l)
+    >>> mfd = Interval(width, l)
     >>> # width : width of the interval
     >>> # l : number of grid points
     """
