@@ -8,7 +8,7 @@ from mflift.tools.image import cell_centered_grid
 class Data(ManifoldValuedData):
     name = "klein-1d"
     d_image = 1
-    imagedims = (50,)
+    imagedims = (250,)
     imageh = (1.0,)
     rhoDomain = np.array([[0.0,1.0]])
 
@@ -19,7 +19,7 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        self.I = [self.curve(self.rhoGrid) for k in range(5)]
+        self.I = [self.curve(self.rhoGrid)]
         ManifoldValuedData.__init__(self, KleinBottle(phi_h), *args, **kwargs)
 
     def curve(self, t):

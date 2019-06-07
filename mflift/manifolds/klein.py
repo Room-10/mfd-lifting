@@ -88,19 +88,19 @@ class KleinBottle(DiscretizedManifold):
         result[ibot,:] = np.vstack((
             (2.5 + 1.5*np.cos(np.pi - v[ibot]))*np.cos(u[ibot]),
             (2.5 + 1.5*np.cos(np.pi - v[ibot]))*np.sin(u[ibot]),
-                  -2.5*np.sin(np.pi - v[ibot])                   ,)).T
+                  -2.5*np.sin(np.pi - v[ibot])                 ,)).T
         result[imid,:] = np.vstack((
             (2.5 + 1.5*np.cos(v[imid] - np.pi))*np.cos(u[imid]),
             (2.5 + 1.5*np.cos(v[imid] - np.pi))*np.sin(u[imid]),
-                     3*      (v[imid] - np.pi)                   ,)).T
+                     3*      (v[imid] - np.pi)                 ,)).T
         result[itop,:] = np.vstack((
                   2 + (2 + np.cos(np.pi - u[itop]))*np.cos(3*np.pi - v[itop]),
-                           np.sin(np.pi - u[itop])                             ,
+                           np.sin(np.pi - u[itop])                           ,
             3*np.pi + (2 + np.cos(np.pi - u[itop]))*np.sin(3*np.pi - v[itop]),)).T
         result[ihan,:] = np.vstack((
             2 - 2*np.cos(4*np.pi - v[ihan]) + np.sin(u[ihan] - np.pi/2),
-                                                np.cos(u[ihan] - np.pi/2),
-                3*      (4*np.pi - v[ihan])                              ,)).T
+                                              np.cos(u[ihan] - np.pi/2),
+                3*      (4*np.pi - v[ihan])                            ,)).T
         return result if multi else result[0]
 
     def geodesic(self, x, y, N):

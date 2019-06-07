@@ -1,4 +1,5 @@
 
+import itertools
 import numpy as np
 
 from scipy.io import loadmat
@@ -103,16 +104,23 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     from mayavi import mlab
     if filename is not None:
         mlab.options.offscreen = True
-    mfig = mlab.figure(size=(1024, 1024))
+    mfig = mlab.figure(size=(1024, 1024), bgcolor=(1,1,1))
 
     verts, simplices = mfd.mesh(0.2)
     verts = mfd.embed(verts) if hasattr(mfd, "embed") else verts
     x,y,z = np.hsplit(verts, 3)
-    mlab.triangular_mesh(x, y, z, simplices, color=(1,1,1), opacity=0.8)
+    mlab.triangular_mesh(x, y, z, simplices, color=(.9,.9,.9), opacity=0.8)
 
     verts, simplices = mfd.verts, mfd.simplices
-    verts = mfd.embed(verts) if hasattr(mfd, "embed") else verts
-    mlab.points3d(*np.hsplit(verts,3), scale_factor=.1, color=(0,0,0))
+    has_edge = np.zeros((verts.shape[0], verts.shape[0]), dtype=bool)
+    for tri in simplices:
+        for e in itertools.combinations(tri, 2):
+            e = sorted(e)
+            if not has_edge[e[0],e[1]]:
+                has_edge[e[0],e[1]] = True
+                crv = mfd.embed(mfd.geodesic(verts[e[0]],verts[e[1]], 20))
+                mlab.plot3d(*np.hsplit(crv,3),
+                    color=(.2,.2,.2), tube_radius=.015)
 
     pointcurves = []
     orthcurves = []
