@@ -75,7 +75,8 @@ class Experiment(BaseExperiment):
             return
 
         subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
-        if self.params['plot']['subgrid']:
+        self.params['plot'].setdefault('subgrid', True)
+        if not self.params['plot']['subgrid']:
             subgrid = None
 
         outputs = []
