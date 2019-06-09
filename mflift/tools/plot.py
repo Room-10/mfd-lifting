@@ -1,4 +1,5 @@
 
+import itertools
 import numpy as np
 
 from scipy.io import loadmat
@@ -8,7 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import colors, cm, rc
 from matplotlib.collections import PolyCollection
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 def plot_hue_images(Is, filename=None):
     rc('font', size=7, family='serif')
@@ -93,7 +95,9 @@ def plot_terrain_maps(Is, dt, filename=None):
         plt.close(fig)
 
 def plot_curves(curves, mfd, subgrid=None, filename=None):
-    if mfd.nembdim == 3 or hasattr(mfd, "embed"):
+    if mfd.ndim == 3:
+        plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
+    elif mfd.nembdim == 3 or hasattr(mfd, "embed"):
         plot_surface_curves(curves, mfd, subgrid=subgrid, filename=filename)
     else:
         plot_curves_2d(curves, mfd, subgrid=subgrid, filename=filename)
@@ -156,7 +160,7 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
 
 def plot_curves_2d(curves, tri, subgrid=None, filename=None):
     """ Plot curves on a triangulated area in the plane """
-    plt.figure(figsize=(12, 10), dpi=100)
+    fig = plt.figure(figsize=(12, 10), dpi=100)
     plot_polys(tri.verts, tri.simplices)
 
     if subgrid is not None:
@@ -174,10 +178,62 @@ def plot_curves_2d(curves, tri, subgrid=None, filename=None):
     if filename is None:
         plt.show()
     else:
-        fig = plt.gcf()
         canvas = FigureCanvasAgg(fig)
         canvas.print_figure(filename)
         plt.close(fig)
+
+def plot_curves_3d(curves, tri, subgrid=None, filename=None):
+    """ Plot curves in a triangulated volume in R^3 """
+    rc('grid', linestyle=':')
+    rc('axes', linewidth=0.5)
+    rc('font', size=7, family='serif')
+
+    fig = plt.figure(figsize=(12, 10), dpi=100)
+    ax = fig.add_subplot(111, projection='3d')
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    plot_polys_3d(tri.verts, tri.simplices)
+
+    if subgrid is not None:
+        ax.scatter(subgrid[:,0], subgrid[:,1], subgrid[:,2],
+                    c='#808080', s=10.0, marker='x')
+
+    for i,crv in enumerate(curves):
+        col = "r" if i%2 == 0 else "b"
+        ax.plot(crv[:,0], crv[:,1], crv[:,2], c=col, linewidth=2)
+
+    for crv in np.stack(curves, axis=1):
+        ax.plot(crv[:,0], crv[:,1], crv[:,2],
+                c='#A0A0A0', linestyle="--", linewidth=0.5)
+
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
+
+def plot_polys_3d(verts, tetrahedra):
+    lines = []
+    has_edge = np.zeros((verts.shape[0], verts.shape[0]), dtype=bool)
+    for t in tetrahedra:
+        for e in itertools.combinations(t, 2):
+            e = sorted(e)
+            if not has_edge[e[0],e[1]]:
+                has_edge[e[0],e[1]] = True
+                lines.append(verts[[e[0],e[1]]])
+    collection = Line3DCollection(lines)
+    collection.set_edgecolor((0.8,0.8,0.8))
+    collection.set_linewidth(0.15)
+    ax = plt.gca()
+    ax.add_collection(collection)
+    xmin, xmax = np.amin(verts[:,0]), np.amax(verts[:,0])
+    ymin, ymax = np.amin(verts[:,1]), np.amax(verts[:,1])
+    zmin, zmax = np.amin(verts[:,2]), np.amax(verts[:,2])
+    ax.set_xlim([xmin-0.1,xmax+0.1])
+    ax.set_ylim([ymin-0.1,ymax+0.1])
+    ax.set_zlim([zmin-0.1,zmax+0.1])
 
 def plot_polys(verts, polys, facecolors=(1,1,1)):
     collection = PolyCollection([verts[p,::-1] for p in polys])

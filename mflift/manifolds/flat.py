@@ -63,7 +63,7 @@ class Cube(FlatManifold):
         nsimplices = 4*(l - 1)**3
         tris = np.zeros((nsimplices, 4), dtype=np.int64, order='C')
         i = np.arange(l-1)
-        i1, i2, i3 = i[None,:,:], i[:,None,:], i[:,:,None]
+        i1, i2, i3 = i[None,None,:], i[None,:,None], i[:,None,None]
         k = (4*((l-1)**2*i1 + (l-1)*i2 + i3)).ravel()
         tris[k + 0,:] = np.vstack([idx.ravel() for idx in
             [l**2* i1    + l* i2    +  i3   , l**2*(i1+1) + l* i2    +  i3   ,
