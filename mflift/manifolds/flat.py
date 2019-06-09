@@ -60,7 +60,7 @@ class Cube(FlatManifold):
         verts[:] = np.mgrid[0:l,0:l,0:l].transpose((1,2,3,0)).reshape(-1,3)
         verts[:] = self.delta*verts - width/2
 
-        nsimplices = 4*(l - 1)**3
+        nsimplices = 5*(l - 1)**3
         tris = np.zeros((nsimplices, 4), dtype=np.int64, order='C')
         i = np.arange(l-1)
         i1, i2, i3 = i[None,None,:], i[None,:,None], i[:,None,None]
@@ -77,6 +77,9 @@ class Cube(FlatManifold):
         tris[k + 3,:] = np.vstack([idx.ravel() for idx in
             [l**2*(i1+1) + l* i2    + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
              l**2*(i1+1) + l* i2    +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
+        tris[k + 4,:] = np.vstack([idx.ravel() for idx in
+            [l**2* i1    + l* i2    + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
+             l**2*(i1+1) + l* i2    +  i3   , l**2* i1    + l*(i2+1) +  i3   ,]]).T
 
         FlatManifold.__init__(self, verts, simplices=tris)
 
