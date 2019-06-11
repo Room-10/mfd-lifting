@@ -2,7 +2,7 @@
 import numpy as np
 
 from mflift.data import ManifoldValuedData
-from mflift.manifolds.flat import Square
+from mflift.manifolds.flat import Cube
 from mflift.tools.image import cell_centered_grid
 
 class Data(ManifoldValuedData):
@@ -20,11 +20,13 @@ class Data(ManifoldValuedData):
         self.rhoResolution = (self.N_image,)
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
         self.I = [self.curve(self.rhoGrid)]
-        ManifoldValuedData.__init__(self, Square(2.1, dimls), *args, **kwargs)
+        ManifoldValuedData.__init__(self, Cube(2.1, dimls), *args, **kwargs)
         self.data_b = self.curve(self.rhoGrid)
 
     def curve(self, t):
-        return (0.8 - 0.5*t)*np.hstack((np.cos(4*t*np.pi), np.sin(4*t*np.pi)))
+        return np.hstack(((0.8 - 0.5*t)*np.cos(4*t*np.pi),
+                          (0.8 - 0.5*t)*np.sin(4*t*np.pi),
+                           0.4 - 0.8*t                   ,))
 
     def rho(self, z):
         return sum([0.5*self.mfd.dist(I[None], z[None])[0]**2 for I in self.I])

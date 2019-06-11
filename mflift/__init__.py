@@ -16,6 +16,7 @@ class Experiment(BaseExperiment):
 
     def init_params(self, *args):
         BaseExperiment.init_params(self, *args)
+        self.params['plot']['subgrid'] = True
         if self.pargs.solver == "pdhg":
             self.params['solver'].update({
                 'granularity': int(1e4),
@@ -25,7 +26,8 @@ class Experiment(BaseExperiment):
 
     def postprocessing(self):
         mfd = self.data.mfd
-        if self.data.d_image == 1 and (mfd.nembdim == 3 or hasattr(mfd, "embed")):
+        if self.data.d_image == 1 and mfd.ndim == 2 \
+           and (mfd.nembdim == 3 or hasattr(mfd, "embed")):
             L_labels = self.data.L_labels
             N_image = self.data.N_image
             res_x =  self.model.x.vars(self.result['data'][0], True)
@@ -73,7 +75,8 @@ class Experiment(BaseExperiment):
             return
 
         subgrid = self.data.S.reshape(-1,self.data.S.shape[-1])
-        if True or self.model.name == "rof":
+        self.params['plot'].setdefault('subgrid', True)
+        if not self.params['plot']['subgrid']:
             subgrid = None
 
         outputs = []
