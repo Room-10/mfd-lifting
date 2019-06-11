@@ -12,6 +12,68 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
+def plot_rcom(result, data, filename=None):
+    rc('grid', linestyle=':')
+    rc('font', size=24)
+    rc('font', family='serif')
+    rc('text', usetex=True)
+
+    vlocal = 3.4834278686879987
+    vglobal = result[0,0]
+
+    points = data.points
+    points2d = np.vstack((np.cos(points[:,0]), np.sin(points[:,0]))).T
+    weights = data.weights
+    X = np.linspace(-0.1, 2*np.pi + 0.1, 300)
+    X2d = np.vstack((np.cos(X), np.sin(X))).T
+    distX = data.rho(X[:,None])[0]
+    R = data.R.reshape(data.M_tris, data.N_image, -1)[:,0].ravel()
+    Rbase = data.Rbase.reshape(data.M_tris, data.N_image, -1)[:,0].ravel()
+    S, R = data.S.ravel()[Rbase], R[Rbase]
+    S[np.argmin(S)] = 2*np.pi
+    ordered = S.argsort()
+    S, R = S[ordered], R[ordered]
+    T = np.concatenate((data.T,data.T + 2*np.pi,data.T - 2*np.pi), axis=0)[:,0]
+    T = T[(T < 2*np.pi+0.1) & (T > -0.1)]
+
+    fig = plt.figure(figsize=(6,4.9), dpi=100)
+    ax = fig.add_subplot(121)
+    ax.plot(X, distX)
+    ax.axvline(vglobal, color='#AA0000', linewidth=2)
+    ax.axvline(vlocal, color='#00AA00')
+    [ax.axvline(t, color='#EE9900', linewidth=1) for t in T]
+    ax.plot(S, R, color='#EE9900')
+    ax.set_ylim((0.85*distX.min(),1.05*distX.max()))
+    ax.set_xlim((-0.1,2*np.pi+0.1))
+    ax.grid(True)
+    ax.set_aspect(2.0)
+    ax.xaxis.set_major_locator(plt.MultipleLocator(np.pi / 2))
+    ax.xaxis.set_minor_locator(plt.MultipleLocator(np.pi / 12))
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(multiple_formatter()))
+    ax.xaxis.set_tick_params(which='major', pad=10)
+    ax.yaxis.set_tick_params(which='major', pad=10)
+
+    ax = fig.add_subplot(122)
+    ax.plot(X2d[:,0], X2d[:,1], c='k')
+    for pt,w in zip(points2d, weights):
+        ln = np.vstack((1.05*pt,(1.1+5*w)*pt))
+        ax.plot(ln[:,0],ln[:,1], linewidth=10, c='#ff7f0e')
+    w = 0.2
+    pt = np.array([np.cos(vlocal), np.sin(vlocal)])
+    ln = np.vstack((1.05*pt,(1.1+5*w)*pt))
+    ax.plot(ln[:,0],ln[:,1], linewidth=5, c='#00AA00')
+    pt = np.array([np.cos(vglobal), np.sin(vglobal)])
+    ln = np.vstack((1.05*pt,(1.1+5*w)*pt))
+    ax.plot(ln[:,0],ln[:,1], linewidth=5, c='#AA0000')
+    ax.set_aspect(1.0)
+    ax.axis('off')
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
+
 def plot_hue_images(Is, filename=None):
     rc('font', size=7, family='serif')
     rc('xtick.major', size=2.5, width=0.5)
@@ -283,3 +345,32 @@ def set_plot_lims(ax, verts, vals):
     ax.set_xlim([xmin,xmax])
     ax.set_ylim([ymin,ymax])
     ax.set_zlim([zmin,zmax])
+
+def multiple_formatter(denominator=2, number=np.pi, latex='\pi'):
+    def gcd(a, b):
+        while b:
+            a, b = b, a%b
+        return a
+
+    def _multiple_formatter(x, pos):
+        den = denominator
+        num = np.int(np.rint(den*x/number))
+        com = gcd(num,den)
+        (num,den) = (int(num/com),int(den/com))
+        if den==1:
+            if num==0:
+                return r'$0$'
+            if num==1:
+                return r'$%s$'%latex
+            elif num==-1:
+                return r'$-%s$'%latex
+            else:
+                return r'$%s%s$'%(num,latex)
+        else:
+            if num==1:
+                return r'$\frac{%s}{%s}$'%(latex,den)
+            elif num==-1:
+                return r'$\frac{-%s}{%s}$'%(latex,den)
+            else:
+                return r'$\frac{%s%s}{%s}$'%(num,latex,den)
+    return _multiple_formatter

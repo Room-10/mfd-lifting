@@ -9,7 +9,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from repyducible.experiment import Experiment as BaseExperiment
 
-from mflift.tools.plot import plot_curves, plot_terrain_maps, plot_hue_images
+from mflift.tools.plot import plot_curves, plot_terrain_maps, \
+                              plot_hue_images, plot_rcom
 
 class Experiment(BaseExperiment):
     extra_source_files = ['demo.py','README.md']
@@ -94,7 +95,11 @@ class Experiment(BaseExperiment):
             f = f if f is None else os.path.join(self.output_dir, f)
             res_x =  self.model.x.vars(res['data'][0], True)
             u_proj = self.model.proj(res_x['u'])
-            if self.data.d_image == 1:
+            if self.data.name == "rcom":
+                np.savez(os.path.join(self.output_dir, "sph.npz"), sol=u_proj[0],
+                    points=self.data.points, weights=self.data.weights)
+                plot_rcom(u_proj, self.data, filename=f)
+            elif self.data.d_image == 1:
                 plot_curves(self.data.I + [u_proj], self.data.mfd,
                     subgrid=subgrid, filename=f)
             elif self.data.d_image == 2 and self.data.name[:4] == "bull":

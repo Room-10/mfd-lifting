@@ -52,9 +52,9 @@ class DiscretizedManifold(object):
         coords = np.zeros((npoints, self.nverts), order='C')
         for i,j in enumerate(indices_01):
             if len(j) > 1:
-                dists = np.sum(tverts[i,self.simplices[j]]**2, axis=-1)
-                wdists = np.sum(tcoords[i,j,:,None]*dists, axis=-1)
-                j = np.argmin(wdists)
+                dists = np.sum(tverts[i,j]**2, axis=-2)
+                wdists = np.sum(tcoords[i,j]*dists, axis=-1)
+                j = j[np.argmin(wdists)]
             else:
                 j = j[0]
             idx_01[i] = j
