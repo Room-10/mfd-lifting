@@ -20,7 +20,7 @@ def plot_elevation(elev, insar, filename=None):
     rc('xtick.major', size=2.5, width=0.5)
     rc('ytick', right=True, direction='in')
     rc('ytick.major', size=2.5, width=0.5)
-    fig = plt.figure(figsize=(17, 4), dpi=100)
+    fig = plt.figure(figsize=(10, 5), dpi=100)
 
     X, Y = [np.arange(s) for s in elev.shape]
     X, Y = np.meshgrid(X, Y, indexing='ij')
@@ -48,9 +48,10 @@ def plot_elevation(elev, insar, filename=None):
 
 def plot_rcom(result, data, filename=None):
     rc('grid', linestyle=':')
-    rc('font', size=24)
+    rc('font', size=19)
     rc('font', family='serif')
     rc('text', usetex=True)
+    fig = plt.figure(figsize=(10,3.7), dpi=200)
 
     vlocal = 3.4834278686879987
     vglobal = result[0,0]
@@ -70,7 +71,6 @@ def plot_rcom(result, data, filename=None):
     T = np.concatenate((data.T,data.T + 2*np.pi,data.T - 2*np.pi), axis=0)[:,0]
     T = T[(T < 2*np.pi+0.1) & (T > -0.1)]
 
-    fig = plt.figure(figsize=(6,4.9), dpi=100)
     ax = fig.add_subplot(121)
     ax.plot(X, distX)
     ax.axvline(vglobal, color='#AA0000', linewidth=2)
@@ -91,7 +91,7 @@ def plot_rcom(result, data, filename=None):
     ax.plot(X2d[:,0], X2d[:,1], c='k')
     for pt,w in zip(points2d, weights):
         ln = np.vstack((1.05*pt,(1.1+5*w)*pt))
-        ax.plot(ln[:,0],ln[:,1], linewidth=10, c='#ff7f0e')
+        ax.plot(ln[:,0],ln[:,1], linewidth=7, c='#1f77b4')
     w = 0.2
     pt = np.array([np.cos(vlocal), np.sin(vlocal)])
     ln = np.vstack((1.05*pt,(1.1+5*w)*pt))
@@ -101,6 +101,8 @@ def plot_rcom(result, data, filename=None):
     ax.plot(ln[:,0],ln[:,1], linewidth=5, c='#AA0000')
     ax.set_aspect(1.0)
     ax.axis('off')
+
+    fig.subplots_adjust(left=0.06, bottom=0, right=1, top=1.1, wspace=0, hspace=0)
     if filename is None:
         plt.show()
     else:
