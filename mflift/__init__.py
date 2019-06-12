@@ -10,7 +10,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from repyducible.experiment import Experiment as BaseExperiment
 
 from mflift.tools.plot import plot_curves, plot_terrain_maps, \
-                              plot_hue_images, plot_rcom
+                              plot_hue_images, plot_rcom, plot_elevation
 
 class Experiment(BaseExperiment):
     extra_source_files = ['demo.py','README.md']
@@ -109,7 +109,10 @@ class Experiment(BaseExperiment):
             elif self.data.d_image == 2 and self.data.mfd.ndim == 1:
                 I = self.data.I.reshape(self.data.imagedims)
                 Iu = u_proj.reshape(self.data.imagedims)
-                plot_hue_images([I,Iu], filename=f)
+                if self.data.name == "insar_unwrap":
+                    plot_elevation(Iu, I, filename=f)
+                else:
+                    plot_hue_images([I,Iu], filename=f)
 
         if not record:
             self.plot(record=True)

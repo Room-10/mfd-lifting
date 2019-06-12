@@ -12,6 +12,40 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
+def plot_elevation(elev, insar, filename=None):
+    rc('grid', linestyle=':')
+    rc('axes', linewidth=0.5)
+    rc('font', size=7, family='serif')
+    rc('xtick', top=True, direction='in')
+    rc('xtick.major', size=2.5, width=0.5)
+    rc('ytick', right=True, direction='in')
+    rc('ytick.major', size=2.5, width=0.5)
+    fig = plt.figure(figsize=(17, 4), dpi=100)
+
+    X, Y = [np.arange(s) for s in elev.shape]
+    X, Y = np.meshgrid(X, Y, indexing='ij')
+
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(X, Y, elev, cmap='gray', shade=False)
+    ax.view_init(elev=75., azim=105)
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    ax.set_xlim((0,elev.shape[0]))
+    ax.set_ylim((0,elev.shape[1]))
+    #ax.set_zlim((elev.min()-0.5, elev.max()-1))
+    #ztickmin = int(10*np.ceil(elev.min()/10))
+    #ztickmax = int(10*np.floor(elev.max()/10))
+    #ztickstride = int(np.ceil((ztickmax - ztickmin)/3))
+    #ax.set_zticks(range(ztickmin, ztickmax+ztickstride, ztickstride))
+
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
+
 def plot_rcom(result, data, filename=None):
     rc('grid', linestyle=':')
     rc('font', size=24)
