@@ -7,24 +7,37 @@ from mflift.util import cached_property, broadcast_io
 
 class DiscretizedManifold(object):
     """ Base class describing a triangulated manifold of dimension `ndim`
-        embeded into `nembdim`-dimensional euclidean space. """
+        embeded into `nembdim`-dimensional euclidean space and parametrized
+        internally in `nintdim` dimensions. """
 
     ndim = None
+    nembdim = None
     verts = None
     simplices = None
 
     def __init__(self, h):
         """ h : maximal length of edges in the triangulation """
         self.verts, self.simplices = self.mesh(h)
-        self.nverts, self.nembdim = self.verts.shape
+        self.nverts, self.nintdim = self.verts.shape
         self.nsimplices = self.simplices.shape[0]
         assert self.simplices.shape[1] == self.ndim + 1
+
+    def embed(self, x):
+        """ Convert internal coordinates to `nembdim`-dimensional euclidean space
+
+        Args:
+            x : ndarray of floats, shape (npoints, nintdim)
+
+        Returns:
+            ndarray of floats, shape (npoints, nembdim)
+        """
+        pass
 
     def embed_barycentric(self, x):
         """ Determine barycentric coordinates with respect to triangulation
 
         Args:
-            x : ndarray of floats, shape (npoints, nembdim)
+            x : ndarray of floats, shape (npoints, nintdim)
 
         Returns:
             containing_simplices : ndarray of ints, shape (npoints,)
@@ -34,7 +47,7 @@ class DiscretizedManifold(object):
                 barycentric coordinates of point i relative to the containing
                 simplex. Moreover: `mf.mean(mf.verts, coords[i]) == x[i]`.
         """
-        assert x.shape[1] == self.nembdim
+        assert x.shape[1] == self.nintdim
         npoints = x.shape[0]
         tol = 1e-14
 
@@ -66,16 +79,16 @@ class DiscretizedManifold(object):
         """ Inverse exponential map at `location` evaluated at `pfrom`
 
         Args:
-            location : ndarray of floats, shape (nembdim,)
-            pfrom : ndarray of floats, shape (nembdim,)
+            location : ndarray of floats, shape (nintdim,)
+            pfrom : ndarray of floats, shape (nintdim,)
 
         Returns:
-            ndarray of floats, shape (nembdim,)
+            ndarray of floats, shape (nintdim,)
         """
-        nbatch, nlocations, nembdim = location.shape
+        nbatch, nlocations, nintdim = location.shape
         npoints = pfrom.shape[1]
         if out is None:
-            out = np.zeros((nbatch, nlocations, npoints, nembdim))
+            out = np.zeros((nbatch, nlocations, npoints, nintdim))
         self._log(location, pfrom, out)
         return out
 
@@ -84,16 +97,16 @@ class DiscretizedManifold(object):
         """ Inverse exponential map at `location` evaluated at `vfrom`
 
         Args:
-            location : ndarray of floats, shape (nembdim,)
-            vfrom : ndarray of floats, shape (nembdim,)
+            location : ndarray of floats, shape (nintdim,)
+            vfrom : ndarray of floats, shape (nintdim,)
 
         Returns:
-            ndarray of floats, shape (nembdim,)
+            ndarray of floats, shape (nintdim,)
         """
-        nbatch, nlocations, nembdim = location.shape
+        nbatch, nlocations, nintdim = location.shape
         nvectors = vfrom.shape[1]
         if out is None:
-            out = np.zeros((nbatch, nlocations, nvectors, nembdim))
+            out = np.zeros((nbatch, nlocations, nvectors, nintdim))
         self._exp(location, vfrom, out)
         return out
 
@@ -102,22 +115,22 @@ class DiscretizedManifold(object):
         """ Calculate arithmetic (geodesic) means of points on the manifold.
 
         Args:
-            points : ndarray of floats, shape (npoints, nembdim)
+            points : ndarray of floats, shape (npoints, nintdim)
                 The first axis can be omitted.
             weights : ndarray of floats, shape (npoints,)
                 The first axis can be omitted.
         Returns:
-            ndarray of floats, shape (nembdim,)
+            ndarray of floats, shape (nintdim,)
         """
-        nbatch, npointsets, npoints, nembdim = points.shape
+        nbatch, npointsets, npoints, nintdim = points.shape
         nweights = weights.shape[1]
         if out is None:
-            out = np.zeros((nbatch, npointsets, nweights, nembdim))
+            out = np.zeros((nbatch, npointsets, nweights, nintdim))
         self._mean(points, weights, out)
         return out
 
     def _mean(self, points, weights, out, max_iter=200):
-        nbatch, npointsets, npoints, nembdim = points.shape
+        nbatch, npointsets, npoints, nintdim = points.shape
         nweights = weights.shape[1]
 
         if nbatch*npointsets*nweights*npoints > 100:
@@ -130,14 +143,14 @@ class DiscretizedManifold(object):
         for i in range(nbatch):
             out[i] = points[i,:,np.argmax(weights[i], axis=-1),:].transpose(1,0,2)
 
-        out_flat = out.reshape((nbatch*npointsets, nweights, nembdim))
-        out_flat2 = out.reshape((nbatch*npointsets*nweights, nembdim))
+        out_flat = out.reshape((nbatch*npointsets, nweights, nintdim))
+        out_flat2 = out.reshape((nbatch*npointsets*nweights, nintdim))
         tmean = out.copy()
-        tmean_flat = tmean.reshape((nbatch*npointsets, nweights, nembdim))
-        tmean_flat2 = tmean.reshape((nbatch*npointsets*nweights, nembdim))
-        tpoints = np.zeros((nbatch, npointsets, nweights, npoints, nembdim))
-        tpoints_flat = tpoints.reshape((nbatch*npointsets, nweights, npoints, nembdim))
-        points_flat = points.reshape((nbatch*npointsets, npoints, nembdim))
+        tmean_flat = tmean.reshape((nbatch*npointsets, nweights, nintdim))
+        tmean_flat2 = tmean.reshape((nbatch*npointsets*nweights, nintdim))
+        tpoints = np.zeros((nbatch, npointsets, nweights, npoints, nintdim))
+        tpoints_flat = tpoints.reshape((nbatch*npointsets, nweights, npoints, nintdim))
+        points_flat = points.reshape((nbatch*npointsets, npoints, nintdim))
 
         w_sum_inv = 1.0/np.einsum('ikl->ik', weights)
         for _iter in range(max_iter):
@@ -151,13 +164,13 @@ class DiscretizedManifold(object):
         """ Compute geodesic distance of points `x` and `y` on the manifold
 
         Args:
-            x : ndarray of floats, shape (nembdim,)
-            y : ndarray of floats, shape (nembdim,)
+            x : ndarray of floats, shape (nintdim,)
+            y : ndarray of floats, shape (nintdim,)
 
         Returns:
             ndarray of floats, shape ()
         """
-        nbatch, nx, nembdim = x.shape
+        nbatch, nx, nintdim = x.shape
         ny = y.shape[1]
         if out is None:
             out = np.zeros((nbatch, nx, ny))
@@ -212,11 +225,12 @@ class DiscretizedManifold(object):
     @cached_property
     def sim_tangent_bases(self):
         """ Orthonormal basis vectors spanning the triangulation's simplices
+            in the embedding space.
 
         Returns:
             ndarray of floats, shape (nsimplices,ndim,nembdim)
         """
-        v = self.verts[self.simplices]
+        v = self.embed(self.verts[self.simplices])
         bases = np.zeros((self.nsimplices, self.ndim, self.nembdim), order='C')
         bases[:] = v[:,1:] - v[:,:1]
         return gramschmidt(bases)
@@ -248,8 +262,9 @@ class DiscretizedManifold(object):
         B = -np.ones((self.nsimplices, self.ndim, self.ndim+1), order='C')
         B[:,:,1:] = np.eye(self.ndim)[None]
         Ad = np.zeros((self.nsimplices, self.ndim, self.ndim), order='C')
-        v = self.verts[self.simplices[:,1:]] - self.verts[self.simplices[:,:1]]
-        Ad[:] = np.einsum('jkm,jlm->jlk', self.sim_tangent_bases, v)
+        v = self.embed(self.verts[self.simplices])
+        onb = self.sim_tangent_bases
+        Ad[:] = np.einsum('jkm,jlm->jlk', onb, v[:,1:] - v[:,:1])
         return B, Ad
 
     @cached_property

@@ -27,8 +27,7 @@ class Experiment(BaseExperiment):
 
     def postprocessing(self):
         mfd = self.data.mfd
-        if self.data.d_image == 1 and mfd.ndim == 2 \
-           and (mfd.nembdim == 3 or hasattr(mfd, "embed")):
+        if self.data.d_image == 1 and mfd.ndim == 2 and mfd.nembdim == 3:
             L_labels = self.data.L_labels
             N_image = self.data.N_image
             res_x =  self.model.x.vars(self.result['data'][0], True)

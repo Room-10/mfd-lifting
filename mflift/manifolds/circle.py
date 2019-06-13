@@ -6,6 +6,7 @@ from mflift.manifolds import DiscretizedManifold
 class Circle(DiscretizedManifold):
     """ Flat 1-dimensional circle S^1 """
     ndim = 1
+    nembdim = 2
 
     def mesh(self, h):
         """ Return a discretization of the interval [0,2*pi]
@@ -36,19 +37,12 @@ class Circle(DiscretizedManifold):
         out[:] = np.abs(self.log(x, y))[...,0]
 
     def embed(self, x):
-        """ Convert angular coordinates to cartesian coordinates in R^2
-
-        Args:
-            x : ndarray of floats, shape (npoints, 1)
-
-        Returns:
-            ndarray of floats, shape (npoints, 2)
-        """
-        multi = (x.ndim == 2)
-        x = x if multi else x[None]
+        assert x.shape[-1] == self.nintdim
+        inshape = x.shape[:-1]
+        x = x[None] if len(inshape) == 0  else x.reshape(-1, self.nintdim)
         circ_normalize(x.reshape(-1))
         result = np.vstack((np.cos(x[:,0]), np.sin(x[:,0]))).T
-        return result if multi else result[0]
+        return result.reshape(inshape + (self.nembdim,))
 
 def circ_normalize(x):
     """ Normalizes values such that always 0 <= x < 2*π (in place)

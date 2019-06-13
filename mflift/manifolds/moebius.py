@@ -6,6 +6,7 @@ from mflift.manifolds import DiscretizedManifold
 class Moebius(DiscretizedManifold):
     """ Flat 2-dimensional Moebius strip """
     ndim = 2
+    nembdim = 3
 
     def mesh(self, h):
         """ Return a triangular grid on the Moebius strip.
@@ -66,16 +67,9 @@ class Moebius(DiscretizedManifold):
         out[:] = np.linalg.norm(self.log(x, y), axis=-1)
 
     def embed(self, x):
-        """ Convert Moebius coordinates to cartesian coordinates in R^3
-
-        Args:
-            x : ndarray of floats, shape (npoints, 2)
-
-        Returns:
-            ndarray of floats, shape (npoints, 3)
-        """
-        multi = (x.ndim == 2)
-        x = x if multi else x[None]
+        assert x.shape[-1] == self.nintdim
+        inshape = x.shape[:-1]
+        x = x[None] if len(inshape) == 0  else x.reshape(-1, self.nintdim)
         moeb_normalize(x)
         phi, t = x[:,0], x[:,1]
         result = np.vstack((np.cos(phi) + t*np.cos(phi/2.0),
@@ -84,7 +78,7 @@ class Moebius(DiscretizedManifold):
         result = np.vstack((np.cos(phi)*(1 + t*np.cos(phi/2.0)),
                             np.sin(phi)*(1 + t*np.cos(phi/2.0)),
                                              t*np.sin(phi/2.0),)).T
-        return result if multi else result[0]
+        return result.reshape(inshape + (self.nembdim,))
 
     def geodesic(self, x, y, N):
         t = np.linspace(0.0, 1.0, N)

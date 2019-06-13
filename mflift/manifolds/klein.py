@@ -6,6 +6,7 @@ from mflift.manifolds import DiscretizedManifold
 class KleinBottle(DiscretizedManifold):
     """ Flat 2-dimensional Klein bottle """
     ndim = 2
+    nembdim = 3
 
     def mesh(self, h):
         """ Return a triangular grid on the Klein bottle.
@@ -67,16 +68,9 @@ class KleinBottle(DiscretizedManifold):
         out[:] = np.linalg.norm(self.log(x, y), axis=-1)
 
     def embed(self, x):
-        """ Convert Klein bottle coordinates to cartesian coordinates in R^3
-
-        Args:
-            x : ndarray of floats, shape (npoints, 2)
-
-        Returns:
-            ndarray of floats, shape (npoints, 3)
-        """
-        multi = (x.ndim == 2)
-        x = x if multi else x[None]
+        assert x.shape[-1] == self.nintdim
+        inshape = x.shape[:-1]
+        x = x[None] if len(inshape) == 0  else x.reshape(-1, self.nintdim)
         klein_normalize(x)
 
         v, u = 2*x[:,0], x[:,1] + 1.5*np.pi
@@ -101,7 +95,7 @@ class KleinBottle(DiscretizedManifold):
             2 - 2*np.cos(4*np.pi - v[ihan]) + np.sin(u[ihan] - np.pi/2),
                                               np.cos(u[ihan] - np.pi/2),
                 3*      (4*np.pi - v[ihan])                            ,)).T
-        return result if multi else result[0]
+        return result.reshape(inshape + (self.nembdim,))
 
     def geodesic(self, x, y, N):
         t = np.linspace(0.0, 1.0, N)

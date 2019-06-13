@@ -19,7 +19,7 @@ class ManifoldValuedData(BaseData):
         self.mfd = mfd
         self.s_gamma = self.mfd.ndim
 
-        # T (L_labels, s_gamma)
+        # T (L_labels, nintdim)
         # P (M_tris, s_gamma+1)
         self.T, self.P = self.mfd.verts, self.mfd.simplices
         self.L_labels = self.mfd.nverts
@@ -31,7 +31,7 @@ class ManifoldValuedData(BaseData):
 
         # Qbary (1, m_sublabels)
         # Sbary (m_sublabels, s_gamma)
-        # S (M_tris, m_sublabels, nembdim)
+        # S (M_tris, m_sublabels, nintdim)
         self.init_subgrid()
         self.m_sublabels = self.Sbary.shape[0]
         self.l_sublabels = self.S.shape[0]*self.S.shape[1]
@@ -45,7 +45,7 @@ class ManifoldValuedData(BaseData):
         nhulls = self.N*self.M_tris
         M, N, m = self.M_tris, self.N_image, self.m_sublabels
         logging.info("Evaluating function on %d points..." % npoints)
-        result = self.rho(self.S.reshape(-1, self.mfd.nembdim))
+        result = self.rho(self.S.reshape(-1, self.mfd.nintdim))
         self.R = np.zeros((M*N,m), dtype=np.float64, order='C')
         self.R[:] = result.reshape((N,M,m)).transpose(1,0,2).reshape(-1,m)
         logging.info("Computing %d convex hulls..." % nhulls)

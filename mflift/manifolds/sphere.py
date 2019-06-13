@@ -8,6 +8,7 @@ from mflift.tools.linalg import normalize
 class Sphere(DiscretizedManifold):
     """ 2-dimensional sphere embedded into 3-dimensional euclidean space """
     ndim = 2
+    nembdim = 3
 
     def __init__(self, h, verts=None):
         """ Setup a triangular grid on the 2-sphere.

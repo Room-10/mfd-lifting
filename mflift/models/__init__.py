@@ -47,8 +47,8 @@ class SublabelModel(PDBaseModel):
         if self.data.initializer is None:
             x['u'][:] = 1.0/self.data.L_labels
         else:
-            nembdim = self.data.initializer.shape[-1]
-            uproj = np.zeros((self.data.N_image,nembdim))
+            nintdim = self.data.initializer.shape[-1]
+            uproj = np.zeros((self.data.N_image,nintdim))
             if self.data.initializer.ndim == 1:
                 uproj[:] = [self.data.initializer]
             else:

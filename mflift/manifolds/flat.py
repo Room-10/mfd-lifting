@@ -15,6 +15,7 @@ class FlatManifold(DiscretizedManifold):
         if self.verts.ndim < 2:
             self.verts = self.verts[:,None]
         self.nverts, self.ndim = self.verts.shape
+        self.nembdim = self.ndim
 
         self.simplices = simplices
         if self.ndim > 1:
@@ -27,6 +28,9 @@ class FlatManifold(DiscretizedManifold):
         self.simplices = np.ascontiguousarray(self.simplices)
 
         DiscretizedManifold.__init__(self, 1)
+
+    def embed(self, x):
+        return x
 
     def mesh(self, h):
         """ dummy function for compatibility """

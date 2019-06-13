@@ -195,7 +195,7 @@ def plot_terrain_maps(Is, dt, filename=None):
 def plot_curves(curves, mfd, subgrid=None, filename=None):
     if mfd.ndim == 3:
         plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
-    elif mfd.nembdim == 3 or hasattr(mfd, "embed"):
+    elif mfd.nembdim == 3:
         plot_surface_curves(curves, mfd, subgrid=subgrid, filename=filename)
     else:
         plot_curves_2d(curves, mfd, subgrid=subgrid, filename=filename)
@@ -205,10 +205,12 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     from mayavi import mlab
     if filename is not None:
         mlab.options.offscreen = True
+        # don't do anything, because we can't avoid an annoying dialog
+        return
     mfig = mlab.figure(size=(1024, 1024), bgcolor=(1,1,1))
 
     verts, simplices = mfd.mesh(0.2)
-    verts = mfd.embed(verts) if hasattr(mfd, "embed") else verts
+    verts = mfd.embed(verts)
     x,y,z = np.hsplit(verts, 3)
     mlab.triangular_mesh(x, y, z, simplices, color=(.9,.9,.9), opacity=0.8)
 
@@ -238,11 +240,10 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
             crv.append(mfd.geodesic(curves[k][i], curves[k][i+1], 10))
         curves[k] = np.concatenate(crv, axis=0)
 
-    if hasattr(mfd, "embed"):
-        subgrid = None if subgrid is None else mfd.embed(subgrid)
-        curves = [mfd.embed(c) for c in curves]
-        orthcurves = [mfd.embed(c) for c in orthcurves]
-        pointcurves = [mfd.embed(c) for c in pointcurves]
+    subgrid = None if subgrid is None else mfd.embed(subgrid)
+    curves = [mfd.embed(c) for c in curves]
+    orthcurves = [mfd.embed(c) for c in orthcurves]
+    pointcurves = [mfd.embed(c) for c in pointcurves]
 
     if subgrid is not None:
         mlab.points3d(*np.hsplit(subgrid,3), scale_factor=.02)
@@ -260,7 +261,7 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     if filename is None:
         mlab.show()
     else:
-        #mlab.savefig(filename, figure=mfig, magnification=2)
+        mlab.savefig(filename, figure=mfig, magnification=2)
         pass
 
 def plot_curves_2d(curves, tri, subgrid=None, filename=None):
