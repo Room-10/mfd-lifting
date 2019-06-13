@@ -2,6 +2,8 @@
 import numpy as np
 import itertools
 
+from mflift.util import broadcast_io
+
 def gramschmidt(X):
     """ Apply Gram-Schmidt orthonormalization to given tuples of same size
 
@@ -60,3 +62,64 @@ def normalize(u, p=2, thresh=0.0):
     fact[ns > thresh] = 1.0/ns[ns > thresh]
     out = fact[:,None]*u
     return out[0] if multi is None else out.reshape(multi)
+
+def quaternion_conj(q):
+    """ Apply conjugation operation to quaternion
+
+    Args:
+        q : ndarray of floats, shape (..., 4)
+
+    Returns:
+        ndarray of floats, shape (..., 4)
+    """
+    result = q.copy()
+    result[...,1:] *= -1
+    return result
+
+@broadcast_io(1,1)
+def quaternion_prod(q1, q2, out=None):
+    """ Apply product between given quaternions
+
+    Args:
+        q1 : ndarray of floats, shape (4,)
+        q2 : ndarray of floats, shape (4,)
+
+    Returns:
+        ndarray of floats, shape (4,)
+    """
+    nbatch, nq1 = q1.shape[:-1]
+    nq2 = q2.shape[1]
+    if out is None:
+        out = np.zeros((nbatch, nq1, nq2, 4))
+    q1, q2 = q1[:,:,None], q2[:,None]
+    out[...,0] = q1[...,0]*q2[...,0] - q1[...,1]*q2[...,1] \
+               - q1[...,2]*q2[...,2] - q1[...,3]*q2[...,3]
+    out[...,1] = q1[...,0]*q2[...,1] + q1[...,1]*q2[...,0] \
+               + q1[...,2]*q2[...,3] - q1[...,3]*q2[...,2]
+    out[...,2] = q1[...,0]*q2[...,2] - q1[...,1]*q2[...,3] \
+               + q1[...,2]*q2[...,0] + q1[...,3]*q2[...,1]
+    out[...,3] = q1[...,0]*q2[...,3] + q1[...,1]*q2[...,2] \
+               - q1[...,2]*q2[...,1] + q1[...,3]*q2[...,0]
+    return out
+
+@broadcast_io(1,1)
+def quaternion_apply(q, vecs, out=None):
+    """ Apply linear quaternion operation to 3-d vector
+
+    Args:
+        q : ndarray of floats, shape (4,)
+        vecs : ndarray of floats, shape (3,)
+
+    Returns:
+        ndarray of floats, shape (3,)
+    """
+    nbatch, nquats = q.shape[:-1]
+    nvecs = vecs.shape[1]
+    if out is None:
+        out = np.zeros((nbatch, nquats, nvecs, 3))
+    padvecs = np.zeros((nbatch, nvecs, 4))
+    padvecs[:,:,1:] = vecs
+    qconj = quaternion_conj(q).reshape(-1,1,4)
+    qv = quaternion_prod(q, padvecs).reshape(-1,nvecs,4)
+    out[:] = quaternion_prod(qv, qconj)[...,1:].reshape(out.shape)
+    return out

@@ -12,6 +12,8 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
+from mflift.tools.linalg import quaternion_apply
+
 def plot_elevation(elev, insar, filename=None):
     rc('grid', linestyle=':')
     rc('axes', linewidth=0.5)
@@ -194,11 +196,69 @@ def plot_terrain_maps(Is, dt, filename=None):
 
 def plot_curves(curves, mfd, subgrid=None, filename=None):
     if mfd.ndim == 3:
-        plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
+        if mfd.nembdim == 4:
+            plot_curves_so3(curves, filename=filename)
+        else:
+            plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
     elif mfd.nembdim == 3:
         plot_surface_curves(curves, mfd, subgrid=subgrid, filename=filename)
     else:
         plot_curves_2d(curves, mfd, subgrid=subgrid, filename=filename)
+
+def plot_curves_so3(curves, filename=None):
+    """ Plot sequences of SO(3) rotation matrices """
+    fig = plt.figure(figsize=(10,2), dpi=100)
+
+    scale = 1.0
+    scx, scy = 0.5*0.75*scale, 0.5*scale
+    scxa = 0.3*scx
+    scya = 0.5*scxa
+    xo = -0.15*scx
+    vbase = np.array([
+        [ 0, 0, 0],         # anchor
+        [ scx,  scy, 1],    # rectangle/box
+        [-scx,  scy, 1],
+        [-scx, -scy, 1],
+        [ scx, -scy, 1],
+        [xo     , -scya/2, 1.01], # orientational arrow
+        [xo+scxa, -scya/2, 1.01],
+        [xo+scxa,  scya/2, 1.01],
+        [xo     ,  scya/2, 1.01],
+        [xo     ,  scya  , 1.01],
+        [xo-scxa,     0  , 1.01],
+        [xo     , -scya  , 1.01]
+    ])
+    pyramid_tris = np.array([[0,1,2],[0,2,3],[0,3,4],[0,4,1]], dtype=np.int64)
+    pyramid_base = np.array([1,2,3,4], dtype=np.int64)
+    arrow = np.array([5,6,7,8,9,10,11], dtype=np.int64)
+
+    for k,crv in enumerate(curves):
+        ax = fig.add_subplot(100*len(curves) + 10 + (k + 1), projection='3d')
+        ax.view_init(elev=0, azim=90)
+        ax.axis('off')
+        ax.set_xlim([-1,2.5*crv.shape[0]+1])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([-1,1])
+        v0s = np.zeros((len(crv),3))
+        v0s[:,0] = 2.5*np.arange(len(crv))
+        ax.scatter(*np.hsplit(v0s,3), c='r')
+        for v0,q in zip(v0s,crv):
+            v = quaternion_apply(q[None,None], vbase[None])[0,0]
+            v += v0
+            patches = [vp for vp in v[pyramid_tris]]
+            patches.append(v[pyramid_base])
+            patches.append(v[arrow])
+            fcols = [[1,1,1]]*5 + [[0,0,1]]
+            ecols = [[0,0,0]]*5 + [[0,0,1]]
+            ax.add_collection3d(
+                Poly3DCollection(patches, facecolors=fcols, edgecolors=ecols))
+
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
 
 def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
