@@ -196,7 +196,7 @@ def plot_terrain_maps(Is, dt, filename=None):
 
 def plot_curves(curves, mfd, subgrid=None, filename=None):
     if mfd.ndim == 3:
-        if mfd.nembdim == 4:
+        if type(mfd).__name__ == "SO3":
             plot_curves_so3(curves, filename=filename)
         else:
             plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
@@ -207,12 +207,12 @@ def plot_curves(curves, mfd, subgrid=None, filename=None):
 
 def plot_curves_so3(curves, filename=None):
     """ Plot sequences of SO(3) rotation matrices """
-    fig = plt.figure(figsize=(10,2), dpi=100)
+    fig = plt.figure(figsize=(10,2*len(curves)), dpi=100)
 
     scale = 1.0
     scx, scy = 0.5*0.75*scale, 0.5*scale
-    scxa = 0.3*scx
-    scya = 0.5*scxa
+    scxa = 0.3*scx  # length of arrow head (and shaft!)
+    scya = 0.5*scxa # width of arrow head (and double width of shaft)
     xo = -0.15*scx
     vbase = np.array([
         [ 0, 0, 0],         # anchor
@@ -226,14 +226,15 @@ def plot_curves_so3(curves, filename=None):
         [xo     ,  scya/2, 1.01],
         [xo     ,  scya  , 1.01],
         [xo-scxa,     0  , 1.01],
-        [xo     , -scya  , 1.01]
+        [xo     , -scya  , 1.01],
     ])
     pyramid_tris = np.array([[0,1,2],[0,2,3],[0,3,4],[0,4,1]], dtype=np.int64)
     pyramid_base = np.array([1,2,3,4], dtype=np.int64)
     arrow = np.array([5,6,7,8,9,10,11], dtype=np.int64)
 
     for k,crv in enumerate(curves):
-        ax = fig.add_subplot(100*len(curves) + 10 + (k + 1), projection='3d')
+        ax = fig.add_subplot(100*len(curves) + 10 + (k + 1),
+                             projection='3d', proj_type = 'ortho')
         ax.view_init(elev=0, azim=90)
         ax.axis('off')
         ax.set_xlim([-1,2.5*crv.shape[0]+1])

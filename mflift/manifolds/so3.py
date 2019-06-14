@@ -9,7 +9,7 @@ from mflift.tools.linalg import normalize
 class SO3(DiscretizedManifold):
     """ 3-dimensional rotational group represented using unit quaternions """
     ndim = 3
-    nembdim = 4
+    nembdim = 9
 
     def __init__(self, h):
         """ Setup a simplicial grid on SO(3).
@@ -89,17 +89,17 @@ class SO3(DiscretizedManifold):
         return self.mesh_refine(verts, simplices, repeat=repeat-1)
 
     def _log(self, location, pfrom, out):
-        """ exp_l^{-1}(p) = d(l,p)*(sign(<p,l>)p - <p,l>l)/|p - <p,l>l| """
+        """ exp_l^{-1}(p) = d(l,p)*(sign(<p,l>)p - |<p,l>|l)/|p - <p,l>l| """
         # pl : <p,l>
-        # fc : d(l,p)/|p - <p,l>*l| = arccos(pl)/sqrt(1 - pl^2)
-        # out : fc*(sign(pl)*p - pl*l)
+        # fc : d(l,p)/|p - <p,l>*l| = arccos(|pl|)/sqrt(1 - pl^2)
+        # out : fc*(sign(pl)*p - |pl|*l)
         pl = np.clip(np.einsum('ilm,ikm->ikl', pfrom, location), -1.0, 1.0)
-        pl = pl[:,:,:,None]
+        sign_pl = np.sign(pl[:,:,:,None])
+        pl = np.abs(pl[:,:,:,None])
         fc = np.arccos(pl)/np.fmax(np.spacing(1),np.sqrt(1 - pl**2))
-        out[:] = fc*(np.sign(pl)*pfrom[:,None,:,:] - pl*location[:,:,None,:])
+        out[:] = fc*(sign_pl*pfrom[:,None,:,:] - pl*location[:,:,None,:])
 
     def _exp(self, location, vfrom, out):
-        """ exp_l(v) = cos(|v|) * l  + sin(|v|) * v/|v| """
         """ exp_l(v) = cos(|v|) * l  + sin(|v|) * v/|v| """
         vn = np.sqrt(np.einsum('ikm,ikm->ik', vfrom, vfrom))
         vnm = np.fmax(np.spacing(1),vn[:,None,:,None])
@@ -113,7 +113,13 @@ class SO3(DiscretizedManifold):
         out[:]= np.arccos(np.abs(np.clip(out, -1.0, 1.0)))
 
     def embed(self, x):
-        return x
+        """ Represent quaternion as 3x3 matrix """
+        x, y, z, w = x[...,0], x[...,1], x[...,2], x[...,3]
+        return np.stack((
+                1 - 2*y**2 - 2*z**2,       2*x*y - 2*z*w,       2*x*z + 2*y*w,
+                      2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2,       2*y*z - 2*x*w,
+                      2*x*z - 2*y*w,       2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2,),
+            axis=-1).reshape(x.shape + (3,3))
 
 def so3mesh_hexacosichoron():
     """ 4-d regular hexacosichoron (600-cell) where opposite points are
