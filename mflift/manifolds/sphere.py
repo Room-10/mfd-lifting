@@ -1,4 +1,5 @@
 
+import itertools
 import numpy as np
 from scipy.spatial import SphericalVoronoi
 
@@ -219,24 +220,25 @@ def sphmesh_refine(verts, tris, repeat=1):
     if repeat == 0: return verts, tris
 
     nverts = verts.shape[0]
-    edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
 
-    newverts = [v for v in verts]
-    for tri in tris:
-        for e in [[tri[0],tri[1]],[tri[1],tri[2]],[tri[2],tri[0]]]:
+    edges = []
+    edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
+    for j,tri in enumerate(tris):
+        for e in itertools.combinations(tri, 2):
             if edgecenters[e[0],e[1]] == 0:
-                newverts.append(normalize(0.5*(verts[e[0]] + verts[e[1]])))
-                edgecenters[e[0],e[1]] = nverts
-                edgecenters[e[1],e[0]] = nverts
+                edges.append(e)
+                edgecenters[e[0],e[1]] = edgecenters[e[1],e[0]] = nverts
                 nverts += 1
-    verts = np.asarray(newverts)
+    edges = np.array(edges, dtype=np.int64)
+    verts = np.concatenate((verts,
+        normalize(0.5*(verts[edges[:,0]] + verts[edges[:,1]])),), axis=0)
 
     newtris = []
     for tri in tris:
         a = edgecenters[tri[1],tri[2]]
         b = edgecenters[tri[2],tri[0]]
         c = edgecenters[tri[0],tri[1]]
-        assert a*b*c > 0
+        assert np.all([a, b, c])
         newtris.extend([
             [tri[0], c, b],
             [tri[1], a, c],

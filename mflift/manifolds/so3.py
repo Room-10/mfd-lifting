@@ -1,4 +1,5 @@
 
+import itertools
 import numpy as np
 from scipy.io import loadmat
 
@@ -16,7 +17,7 @@ class SO3(DiscretizedManifold):
         Args:
             h : maximal length of edges in the triangulation
         """
-        self.verts, self.simplices = sphmesh_hexacosichoron()
+        self.verts, self.simplices = so3mesh_hexacosichoron()
         DiscretizedManifold.__init__(self, h)
 
     def mesh(self, h):
@@ -47,41 +48,40 @@ class SO3(DiscretizedManifold):
 
         nverts = verts.shape[0]
         nsimplices = simplices.shape[0]
-        edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
-        barycenters = np.zeros((nsimplices,), dtype=np.int64)
 
-        newverts = [v for v in verts]
+        edges = []
+        edgecenters = np.zeros((nverts, nverts), dtype=np.int64)
         for j,sim in enumerate(simplices):
-            for e in [[sim[0],sim[1]],[sim[1],sim[2]],[sim[2],sim[0]],
-                      [sim[0],sim[3]],[sim[1],sim[3]],[sim[2],sim[3]]]:
+            for e in itertools.combinations(sim, 2):
                 if edgecenters[e[0],e[1]] == 0:
-                    newverts.append(self.mean(verts[e], np.ones(2)))
-                    edgecenters[e[0],e[1]] = nverts
-                    edgecenters[e[1],e[0]] = nverts
+                    edges.append(e)
+                    edgecenters[e[0],e[1]] = edgecenters[e[1],e[0]] = nverts
                     nverts += 1
-            newverts.append(self.mean(verts[sim], np.ones(4)))
-            barycenters[j] = nverts
-            nverts += 1
-        verts = np.asarray(newverts)
+        edges = np.array(edges, dtype=np.int64)
+        barycenters = np.int64(np.arange(nverts, nverts + nsimplices))
+        nverts += nsimplices
+        verts = np.concatenate((verts,
+            self.mean(verts[edges][None], np.ones((1,1,2)))[0,:,0],
+            self.mean(verts[simplices][None], np.ones((1,1,4)))[0,:,0],), axis=0)
 
         newsims = []
         for j,sim in enumerate(simplices):
             p12 = edgecenters[sim[0],sim[1]]
             p23 = edgecenters[sim[1],sim[2]]
-            p13 = edgecenters[sim[2],sim[0]]
-            p14 = edgecenters[sim[3],sim[0]]
-            p24 = edgecenters[sim[3],sim[1]]
-            p34 = edgecenters[sim[3],sim[2]]
+            p13 = edgecenters[sim[0],sim[2]]
+            p14 = edgecenters[sim[0],sim[3]]
+            p24 = edgecenters[sim[1],sim[3]]
+            p34 = edgecenters[sim[2],sim[3]]
             pc = barycenters[j]
-            assert p12*p23*p13*p14*p24*p34*pc > 0
-            newtris.extend([
-                [tri[0], p12, p13, p14],
+            assert np.all([p12, p23, p13, p14, p24, p34, pc])
+            newsims.extend([
+                [sim[0], p12, p13, p14],
                 [    pc, p12, p13, p14],
-                [tri[1], p12, p23, p24],
+                [sim[1], p12, p23, p24],
                 [    pc, p12, p23, p24],
-                [tri[2], p13, p23, p34],
+                [sim[2], p13, p23, p34],
                 [    pc, p13, p23, p34],
-                [tri[3], p14, p24, p34],
+                [sim[3], p14, p24, p34],
                 [    pc, p14, p24, p34],
             ])
         simplices = np.asarray(newsims)
