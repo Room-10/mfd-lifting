@@ -9,7 +9,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from repyducible.experiment import Experiment as BaseExperiment
 
-from mflift.tools.plot import plot_curves, plot_terrain_maps, \
+from mflift.tools.plot import plot_curves, plot_terrain_maps, plot_spd2, \
                               plot_hue_images, plot_rcom, plot_elevation
 
 class Experiment(BaseExperiment):
@@ -94,6 +94,8 @@ class Experiment(BaseExperiment):
             f = f if f is None else os.path.join(self.output_dir, f)
             res_x =  self.model.x.vars(res['data'][0], True)
             u_proj = self.model.proj(res_x['u'])
+            if self.data.name == "dti-2d":
+                plot_spd2([u_proj, self.data.I], filename=f)
             if self.data.name == "rcom":
                 np.savez(os.path.join(self.output_dir, "sph.npz"), sol=u_proj[0],
                     points=self.data.points, weights=self.data.weights)

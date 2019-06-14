@@ -14,6 +14,11 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 from mflift.tools.linalg import quaternion_apply
 
+def plot_spd2(Is, filename=None):
+    # TODO
+    #fig = plt.figure(figsize=(10, 10), dpi=100)
+    pass
+
 def plot_elevation(elev, insar, filename=None):
     rc('grid', linestyle=':')
     rc('axes', linewidth=0.5)
@@ -35,11 +40,6 @@ def plot_elevation(elev, insar, filename=None):
     ax.zaxis.pane.fill = False
     ax.set_xlim((0,elev.shape[0]))
     ax.set_ylim((0,elev.shape[1]))
-    #ax.set_zlim((elev.min()-0.5, elev.max()-1))
-    #ztickmin = int(10*np.ceil(elev.min()/10))
-    #ztickmax = int(10*np.floor(elev.max()/10))
-    #ztickstride = int(np.ceil((ztickmax - ztickmin)/3))
-    #ax.set_zticks(range(ztickmin, ztickmax+ztickstride, ztickstride))
 
     if filename is None:
         plt.show()
@@ -243,7 +243,7 @@ def plot_curves_so3(curves, filename=None):
     for k,crv in enumerate(curves):
         v0s = np.zeros((len(crv),3))
         v0s[:,2] = -2.5*k
-        v0s[:,0] = 2.5*np.arange(len(crv))
+        v0s[:,0] = 2.1*np.arange(len(crv))
         mlab.points3d(*np.hsplit(v0s,3), color=(1,0,0), scale_factor=.1)
         for v0,q in zip(v0s,crv):
             v = quaternion_apply(q[None,None], vbase[None])[0,0]

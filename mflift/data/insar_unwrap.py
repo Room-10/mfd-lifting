@@ -20,8 +20,9 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = self.imagedims
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        ManifoldValuedData.__init__(self, Interval(200,50), *args, **kwargs)
+        ManifoldValuedData.__init__(self, Interval(0,200,50), *args, **kwargs)
 
     def rho(self, z):
         I = self.I.reshape(-1)
-        return (I[None] - z%(2*np.pi))**2
+        diff = I[None] - z%(2*np.pi)
+        return 0.5*np.fmin(np.abs(diff), np.abs(2*np.pi - diff))**2

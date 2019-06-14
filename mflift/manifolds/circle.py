@@ -15,7 +15,7 @@ class Circle(DiscretizedManifold):
             h : float
                 Step width in angular component (radians).
         """
-        L_labels = M_tris = max(2, int(np.ceil(2*np.pi/h)))
+        L_labels = M_tris = max(3, int(np.ceil(2*np.pi/h)))
         verts = np.linspace(0, 2*np.pi, L_labels+1)[:-1,None]
         verts = np.array(verts, dtype=np.float64, order='C')
         num = np.arange(L_labels)

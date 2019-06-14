@@ -6,7 +6,7 @@ from mflift.manifolds.flat import Cube
 from mflift.tools.image import cell_centered_grid
 
 class Data(ManifoldValuedData):
-    name = "flat-1d"
+    name = "flat3-1d"
     d_image = 1
     imagedims = (50,)
     imageh = (1.0,)

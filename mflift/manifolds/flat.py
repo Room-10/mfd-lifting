@@ -65,27 +65,27 @@ class Cube(FlatManifold):
         verts[:] = self.delta*verts - width/2
 
         nsimplices = 5*(l - 1)**3
-        tris = np.zeros((nsimplices, 4), dtype=np.int64, order='C')
+        sims = np.zeros((nsimplices, 4), dtype=np.int64, order='C')
         i = np.arange(l-1)
         i1, i2, i3 = i[None,None,:], i[None,:,None], i[:,None,None]
-        k = (4*((l-1)**2*i1 + (l-1)*i2 + i3)).ravel()
-        tris[k + 0,:] = np.vstack([idx.ravel() for idx in
+        k = (5*((l-1)**2*i1 + (l-1)*i2 + i3)).ravel()
+        sims[k + 0,:] = np.vstack([idx.ravel() for idx in
             [l**2* i1    + l* i2    +  i3   , l**2*(i1+1) + l* i2    +  i3   ,
              l**2* i1    + l*(i2+1) +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
-        tris[k + 1,:] = np.vstack([idx.ravel() for idx in
+        sims[k + 1,:] = np.vstack([idx.ravel() for idx in
             [l**2*(i1+1) + l*(i2+1) +  i3   , l**2*(i1+1) + l*(i2+1) + (i3+1),
              l**2* i1    + l*(i2+1) +  i3   , l**2*(i1+1) + l* i2    +  i3   ,]]).T
-        tris[k + 2,:] = np.vstack([idx.ravel() for idx in
+        sims[k + 2,:] = np.vstack([idx.ravel() for idx in
             [l**2* i1    + l*(i2+1) + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
              l**2* i1    + l*(i2+1) +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
-        tris[k + 3,:] = np.vstack([idx.ravel() for idx in
+        sims[k + 3,:] = np.vstack([idx.ravel() for idx in
             [l**2*(i1+1) + l* i2    + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
              l**2*(i1+1) + l* i2    +  i3   , l**2* i1    + l* i2    + (i3+1),]]).T
-        tris[k + 4,:] = np.vstack([idx.ravel() for idx in
+        sims[k + 4,:] = np.vstack([idx.ravel() for idx in
             [l**2* i1    + l* i2    + (i3+1), l**2*(i1+1) + l*(i2+1) + (i3+1),
              l**2*(i1+1) + l* i2    +  i3   , l**2* i1    + l*(i2+1) +  i3   ,]]).T
 
-        FlatManifold.__init__(self, verts, simplices=tris)
+        FlatManifold.__init__(self, verts, simplices=sims)
 
 class Square(FlatManifold):
     """ Evenly triangulate a quadratic area around the origin
@@ -105,7 +105,7 @@ class Square(FlatManifold):
         nsimplices = 2*(l - 1)**2
         tris = np.zeros((nsimplices, 3), dtype=np.int64, order='C')
         i, j = np.arange(l-1)[None,:], np.arange(l-1)[:,None]
-        k = (2*(l-1)*i + 2*j).ravel()
+        k = (2*((l-1)*i + j)).ravel()
         tris[k + 0,:] = np.vstack([idx.ravel() for idx in
             [l*i + j, l*(i+1) +  j   , l*(i+1) + (j+1)]]).T
         tris[k + 1,:] = np.vstack([idx.ravel() for idx in
@@ -144,12 +144,12 @@ class Disk(FlatManifold):
 class Interval(FlatManifold):
     """ Evenly partition an interval around the origin
 
-    >>> mfd = Interval(width, l)
-    >>> # width : width of the interval
+    >>> mfd = Interval(a, b, l)
+    >>> # a < b : end points of the interval
     >>> # l : number of grid points
     """
-    def __init__(self, width, l):
+    def __init__(self, a, b, l):
         assert l > 1
         self.n_dimlabels = l
-        self.delta = width/(l-1)
-        FlatManifold.__init__(self, self.delta*np.mgrid[0:l] - width/2)
+        self.delta = (b-a)/(l-1)
+        FlatManifold.__init__(self, a + self.delta*np.mgrid[0:l])

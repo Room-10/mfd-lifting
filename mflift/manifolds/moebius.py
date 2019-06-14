@@ -18,7 +18,7 @@ class Moebius(DiscretizedManifold):
         if np.isscalar(h):
             h = (h,h)
         assert len(h) == 2
-        phires = max(2, int(np.ceil(2*np.pi/h[0])))
+        phires = max(3, int(np.ceil(2*np.pi/h[0])))
         tres = max(2, int(np.ceil(1 + 1.0/h[1])))
 
         phih = 2*np.pi/phires

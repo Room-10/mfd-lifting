@@ -123,3 +123,29 @@ def quaternion_apply(q, vecs, out=None):
     qv = quaternion_prod(q, padvecs).reshape(-1,nvecs,4)
     out[:] = quaternion_prod(qv, qconj)[...,1:].reshape(out.shape)
     return out
+
+def expm_sym(V):
+    """ Apply matrix exponential to batch of matrices
+
+    Args:
+        V : ndarray of floats, shape (..., ndim, ndim)
+
+    Returns:
+        ndarray of floats, shape (..., ndim, ndim)
+    """
+    vals, vects = np.linalg.eig(V)
+    return np.einsum('...ik, ...k, ...jk -> ...ij',
+                     vects, np.exp(vals), vects.conj())
+
+def logm_spd(X):
+    """ Apply matrix logarithm to batch of matrices
+
+    Args:
+        X : ndarray of floats, shape (..., ndim, ndim)
+
+    Returns:
+        ndarray of floats, shape (..., ndim, ndim)
+    """
+    vals, vects = np.linalg.eig(X)
+    return np.einsum('...ik, ...k, ...jk -> ...ij',
+                     vects, np.log(vals), vects.conj())
