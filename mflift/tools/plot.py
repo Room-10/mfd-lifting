@@ -207,12 +207,19 @@ def plot_curves(curves, mfd, subgrid=None, filename=None):
 
 def plot_curves_so3(curves, filename=None):
     """ Plot sequences of SO(3) rotation matrices """
-    fig = plt.figure(figsize=(10,2*len(curves)), dpi=100)
+    from mayavi import mlab
+    if filename is not None:
+        mlab.options.offscreen = True
+        # don't do anything, because we can't avoid an annoying dialog
+        return
+    mfig = mlab.figure(size=(1600, len(curves)*300), bgcolor=(1,1,1))
+    mfig.scene.parallel_projection = True
+    mlab.view(elevation=90, azimuth=90)
 
     scale = 1.0
     scx, scy = 0.5*0.75*scale, 0.5*scale
-    scxa = 0.3*scx  # length of arrow head (and shaft!)
-    scya = 0.5*scxa # width of arrow head (and double width of shaft)
+    scxa = 0.4*scx  # length of arrow head (and shaft!)
+    scya = 0.6*scxa # width of arrow head (and double width of shaft)
     xo = -0.15*scx
     vbase = np.array([
         [ 0, 0, 0],         # anchor
@@ -228,38 +235,28 @@ def plot_curves_so3(curves, filename=None):
         [xo-scxa,     0  , 1.01],
         [xo     , -scya  , 1.01],
     ])
-    pyramid_tris = np.array([[0,1,2],[0,2,3],[0,3,4],[0,4,1]], dtype=np.int64)
-    pyramid_base = np.array([1,2,3,4], dtype=np.int64)
-    arrow = np.array([5,6,7,8,9,10,11], dtype=np.int64)
+
+    base = np.array([
+        [0,1,2],[0,2,3],[0,3,4],[0,4,1],[1,2,4],[2,3,4],], dtype=np.int64)
+    arrow = np.array([[5,6,8],[6,7,8],[9,10,11],], dtype=np.int64)
 
     for k,crv in enumerate(curves):
-        ax = fig.add_subplot(100*len(curves) + 10 + (k + 1),
-                             projection='3d', proj_type = 'ortho')
-        ax.view_init(elev=0, azim=90)
-        ax.axis('off')
-        ax.set_xlim([-1,2.5*crv.shape[0]+1])
-        ax.set_ylim([-1,1])
-        ax.set_zlim([-1,1])
         v0s = np.zeros((len(crv),3))
+        v0s[:,2] = -2.5*k
         v0s[:,0] = 2.5*np.arange(len(crv))
-        ax.scatter(*np.hsplit(v0s,3), c='r')
+        mlab.points3d(*np.hsplit(v0s,3), color=(1,0,0), scale_factor=.1)
         for v0,q in zip(v0s,crv):
             v = quaternion_apply(q[None,None], vbase[None])[0,0]
             v += v0
-            patches = [vp for vp in v[pyramid_tris]]
-            patches.append(v[pyramid_base])
-            patches.append(v[arrow])
-            fcols = [[1,1,1]]*5 + [[0,0,1]]
-            ecols = [[0,0,0]]*5 + [[0,0,1]]
-            ax.add_collection3d(
-                Poly3DCollection(patches, facecolors=fcols, edgecolors=ecols))
+            x, y, z = np.hsplit(v, 3)
+            mlab.triangular_mesh(x, y, z, base, color=(.9,.9,.9), opacity=0.8)
+            mlab.triangular_mesh(x, y, z, arrow, color=(.0,.0,1.0), opacity=0.8)
 
     if filename is None:
-        plt.show()
+        mlab.show()
     else:
-        canvas = FigureCanvasAgg(fig)
-        canvas.print_figure(filename)
-        plt.close(fig)
+        mlab.savefig(filename, figure=mfig, magnification=2)
+        pass
 
 def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
