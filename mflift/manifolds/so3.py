@@ -95,6 +95,7 @@ class SO3(DiscretizedManifold):
         # out : fc*(sign(pl)*p - |pl|*l)
         pl = np.clip(np.einsum('ilm,ikm->ikl', pfrom, location), -1.0, 1.0)
         sign_pl = np.sign(pl[:,:,:,None])
+        sign_pl[sign_pl == 0] = 1
         pl = np.abs(pl[:,:,:,None])
         fc = np.arccos(pl)/np.fmax(np.spacing(1),np.sqrt(1 - pl**2))
         out[:] = fc*(sign_pl*pfrom[:,None,:,:] - pl*location[:,:,None,:])
@@ -119,7 +120,7 @@ class SO3(DiscretizedManifold):
                 1 - 2*y**2 - 2*z**2,       2*x*y - 2*z*w,       2*x*z + 2*y*w,
                       2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2,       2*y*z - 2*x*w,
                       2*x*z - 2*y*w,       2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2,),
-            axis=-1).reshape(x.shape + (3,3))
+            axis=-1)
 
 def so3mesh_hexacosichoron():
     """ 4-d regular hexacosichoron (600-cell) where opposite points are

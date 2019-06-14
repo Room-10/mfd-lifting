@@ -51,10 +51,21 @@ class DiscretizedManifold(object):
         npoints = x.shape[0]
         tol = 1e-14
 
+        # tverts { npoints, nsimplices, nintdim, ndim+1 }
+        # tdirs { npoints, nsimplices, nintdim, ndim }
+        # tbases { npoints, nsimplices, ndim, nintdim }
+        # tbdirs { npoints, nsimplices, ndim, ndim }
+        # tbverts { npoints, nsimplices, ndim, ndim+1 }
         tverts = self.log(x[None], self.verts[None])[0,:,self.simplices]
         tverts = tverts.transpose(2,0,3,1)
         tdirs = tverts[...,1:] - tverts[...,:1]
-        tcoords = np.linalg.solve(tdirs, -tverts[...,0])
+        tbases = tdirs.reshape(-1, self.nintdim, self.ndim).transpose(0,2,1)
+        tbases = gramschmidt(tbases)
+        tbases = tbases.reshape(npoints, -1, self.ndim, self.nintdim)
+        tbdirs = np.einsum("...ij,...jk->...ik", tbases, tdirs)
+        tbverts = np.einsum("...ij,...jk->...ik", tbases, tverts)
+
+        tcoords = np.linalg.solve(tbdirs, -tbverts[...,0])
         tcoords = np.concatenate((1 - tcoords.sum(axis=-1)[:,:,None], tcoords), axis=-1)
         mask_01 = (tcoords > -tol) & (tcoords < 1.0+tol)
         mask_01 = np.all(mask_01, axis=2)
