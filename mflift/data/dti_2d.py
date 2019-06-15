@@ -56,6 +56,6 @@ def synthetic_spd_img(res, s=8.0):
 
     result = circ.copy()
     midl, midr = int(np.floor(res/2)), int(np.floor((res+1)/2))
-    result[:midl,:midl] = circ[:midl,midr:]
-    result[:midl,midr:] = circ[:midl,:midl]
+    result[:midl,:midr] = circ[:midl,midl:]
+    result[:midl,midl:] = circ[:midl,:midr]
     return result.reshape(res,res,4)

@@ -95,7 +95,9 @@ class Experiment(BaseExperiment):
             res_x =  self.model.x.vars(res['data'][0], True)
             u_proj = self.model.proj(res_x['u'])
             if self.data.name == "dti-2d":
-                plot_spd2([u_proj, self.data.I], filename=f)
+                I = self.data.I.reshape(self.data.imagedims + (2,2))
+                Iu = u_proj.reshape(self.data.imagedims + (2,2))
+                plot_spd2([I,Iu], filename=f)
             if self.data.name == "rcom":
                 np.savez(os.path.join(self.output_dir, "sph.npz"), sol=u_proj[0],
                     points=self.data.points, weights=self.data.weights)

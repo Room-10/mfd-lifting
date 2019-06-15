@@ -8,16 +8,55 @@ from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import colors, cm, rc
-from matplotlib.collections import PolyCollection
+from matplotlib.collections import PolyCollection, EllipseCollection
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 from mflift.tools.linalg import quaternion_apply
 
 def plot_spd2(Is, filename=None):
-    # TODO
-    #fig = plt.figure(figsize=(10, 10), dpi=100)
-    pass
+    rc('axes', linewidth=0.5)
+    rc('font', size=7, family='serif')
+    rc('xtick', top=True, direction='in')
+    rc('xtick.major', size=2.5, width=0.5)
+    rc('ytick', right=True, direction='in')
+    rc('ytick.major', size=2.5, width=0.5)
+    fig = plt.figure(figsize=(len(Is)*5, 5), dpi=100)
+
+    for k,I in enumerate(Is):
+        ax = fig.add_subplot(100 + len(Is)*10 + (k + 1))
+
+        imagedims = I.shape[:2]
+        vals, vecs = np.linalg.eig(I)
+
+        FA = np.sqrt(0.5*(vals[...,0]**2 + vals[...,1]**2) - vals[...,0]*vals[...,1])
+        FA /= np.linalg.norm(Is[0], axis=(-2,-1))
+
+        lvals = np.log(vals)
+        GA = np.sqrt(0.5*(lvals[...,0]**2 + lvals[...,1]**2) - lvals[...,0]*lvals[...,1])
+        GA /= 1 + GA
+
+        angles = 180 + 180*np.arctan2(vecs[...,0,0], vecs[...,1,0])/np.pi
+        vals /= 0.5*vals.max()
+
+        X, Y = np.meshgrid(np.arange(imagedims[0]), np.arange(imagedims[1]))
+        XY = np.vstack((X.ravel(), Y.ravel())).T
+        ec = EllipseCollection(vals[...,0], vals[...,1], angles, units='x',
+                               offsets=XY, transOffset=ax.transData,
+                               edgecolors=0.8*cm.hsv(GA.ravel())[:,:-1],
+                               facecolors=1.0*cm.hsv(GA.ravel())[:,:-1],
+                               linewidths=0.5)
+        ax.add_collection(ec)
+        ax.autoscale_view()
+        ax.invert_yaxis()
+        ax.axis("equal")
+
+    if filename is None:
+        plt.show()
+    else:
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(filename)
+        plt.close(fig)
 
 def plot_elevation(elev, insar, filename=None):
     rc('grid', linestyle=':')
