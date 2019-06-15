@@ -14,10 +14,11 @@ from mflift.models import SublabelModel
 class Model(SublabelModel):
     name = "quadratic"
 
-    def __init__(self, *args, lbd=1.0, alph=np.inf, **kwargs):
+    def __init__(self, *args, lbd=5.0, alph=np.inf, fdscheme="centered", **kwargs):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
         self.alph = alph
+        self.fdscheme = fdscheme
         logging.info("Init model '%s' (lambda=%.2e, alpha=%.2e)" \
                      % (self.name, self.lbd, self.alph))
 
@@ -55,7 +56,7 @@ class Model(SublabelModel):
         Adext[:,:,:-1] = np.kron(np.eye(d_image), self.data.Ad)
 
         self.linblocks.update({
-            'Grad': GradientOp(imagedims, L_labels),
+            'Grad': GradientOp(imagedims, L_labels, scheme=self.fdscheme),
             'PB': IndexedMultAdj(L_labels, d_image*N_image, self.data.P, self.data.B),
             'Adext': MatrixMultRBatched(N_image, Adext),
             'Id_w2': MatrixMultR(M_tris*N_image, Id_w2),

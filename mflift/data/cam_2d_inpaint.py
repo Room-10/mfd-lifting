@@ -33,10 +33,14 @@ class Data(ManifoldValuedData):
         self.I[-1, 0] = q[6]
         self.I[ 0,-1] = q[12]
         self.I[-1,-1] = q[18]
+        #self.I[ 0] = q[:5]
+        #self.I[-1] = q[15:20]
         self.inpaint_msk = np.ones(self.imagedims, dtype=bool)
         self.inpaint_msk[[0,0,-1,-1],[0,-1,0,-1]] = False
+        #self.inpaint_msk[[0,-1],:] = False
         self.constr_msk = np.zeros(self.imagedims, dtype=bool)
         self.constr_msk[[0,0,-1,-1],[0,-1,0,-1]] = True
+        #self.constr_msk[[0,-1],:] = True
 
         self.inpaint_msk = self.inpaint_msk.reshape(-1)
         self.constr_msk = self.constr_msk.reshape(-1)

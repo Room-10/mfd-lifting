@@ -13,11 +13,13 @@ from mflift.models import SublabelModel
 class Model(SublabelModel):
     name = "rof"
 
-    def __init__(self, *args, lbd=1.0, regularizer="tv", alph=np.inf, **kwargs):
+    def __init__(self, *args, lbd=1.0, regularizer="tv", alph=np.inf,
+                              fdscheme="centered", **kwargs):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
         self.regularizer = regularizer
         self.alph = alph
+        self.fdscheme = fdscheme
         logging.info("Init model '%s' (%s regularizer, lambda=%.2e)" \
                      % (self.name, self.regularizer, self.lbd))
 
@@ -67,7 +69,7 @@ class Model(SublabelModel):
 
         self.linblocks.update({
             'PAbTri': IndexedMultAdj(L_labels, N_image, self.data.P, Ab_mats),
-            'Grad': GradientOp(imagedims, L_labels),
+            'Grad': GradientOp(imagedims, L_labels, scheme=self.fdscheme),
             'PB': IndexedMultAdj(L_labels, d_image*N_image, self.data.P, self.data.B),
             'Ad': MatrixMultRBatched(N_image*d_image, self.data.Ad),
             'Adext': MatrixMultRBatched(N_image, Adext),

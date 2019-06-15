@@ -13,9 +13,10 @@ from mflift.models import SublabelModel
 class Model(SublabelModel):
     name = "tv"
 
-    def __init__(self, *args, lbd=1.0, **kwargs):
+    def __init__(self, *args, lbd=1.0, fdscheme="centered", **kwargs):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
+        self.fdscheme = fdscheme
         logging.info("Init model '%s' (lambda=%.2e)" % (self.name, self.lbd))
 
         imagedims = self.data.imagedims
@@ -47,7 +48,7 @@ class Model(SublabelModel):
         L_labels = self.data.L_labels
         d_image = self.data.d_image
         self.linblocks.update({
-            'Grad': GradientOp(imagedims, L_labels),
+            'Grad': GradientOp(imagedims, L_labels, scheme=self.fdscheme),
             'PB': IndexedMultAdj(L_labels, d_image*N_image, self.data.P, self.data.B),
             'Ad': MatrixMultRBatched(N_image*d_image, self.data.Ad),
         })

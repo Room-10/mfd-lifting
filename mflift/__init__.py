@@ -101,7 +101,7 @@ class Experiment(BaseExperiment):
                 plot_spd2([I,Iu], filename=f)
             elif self.data.name == "cam-2d-inpaint":
                 Iu = u_proj.reshape(self.data.imagedims + (4,))
-                msk = data.constr_msk.reshape(self.data.imagedims)
+                msk = self.data.constraints[0].reshape(self.data.imagedims)
                 plot_so3(Iu, mask=msk, filename=f)
             elif self.data.name == "rcom":
                 np.savez(os.path.join(self.output_dir, "sph.npz"), sol=u_proj[0],
