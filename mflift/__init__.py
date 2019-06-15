@@ -10,7 +10,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from repyducible.experiment import Experiment as BaseExperiment
 
 from mflift.tools.plot import plot_curves, plot_terrain_maps, plot_spd2, \
-                              plot_hue_images, plot_rcom, plot_elevation
+                              plot_hue_images, plot_rcom, plot_elevation, \
+                              plot_so3
 
 class Experiment(BaseExperiment):
     extra_source_files = ['demo.py','README.md']
@@ -98,7 +99,11 @@ class Experiment(BaseExperiment):
                 I = self.data.I.reshape(self.data.imagedims + (2,2))
                 Iu = u_proj.reshape(self.data.imagedims + (2,2))
                 plot_spd2([I,Iu], filename=f)
-            if self.data.name == "rcom":
+            elif self.data.name == "cam-2d-inpaint":
+                Iu = u_proj.reshape(self.data.imagedims + (4,))
+                msk = data.constr_msk.reshape(self.data.imagedims)
+                plot_so3(Iu, mask=msk, filename=f)
+            elif self.data.name == "rcom":
                 np.savez(os.path.join(self.output_dir, "sph.npz"), sol=u_proj[0],
                     points=self.data.points, weights=self.data.weights)
                 plot_rcom(u_proj, self.data, filename=f)

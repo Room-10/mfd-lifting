@@ -14,6 +14,61 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 from mflift.tools.linalg import quaternion_apply
 
+def plot_so3(I, mask=None, filename=None):
+    """ Plot (masked) image of SO(3) rotation matrices """
+    from mayavi import mlab
+    if filename is not None:
+        mlab.options.offscreen = True
+        # don't do anything, because we can't avoid an annoying dialog
+        return
+    mfig = mlab.figure(size=(900,900), bgcolor=(1,1,1))
+    mfig.scene.parallel_projection = True
+    mlab.view(elevation=90, azimuth=90)
+
+    scale = 1.0
+    scx, scy = 0.5*0.75*scale, 0.5*scale
+    scxa = 0.4*scx  # length of arrow head (and shaft!)
+    scya = 0.6*scxa # width of arrow head (and double width of shaft)
+    xo = -0.15*scx
+    vbase = np.array([
+        [ 0, 0, 0],         # anchor
+        [ scx,  scy, 1],    # rectangle/box
+        [-scx,  scy, 1],
+        [-scx, -scy, 1],
+        [ scx, -scy, 1],
+        [xo     , -scya/2, 1.01], # orientational arrow
+        [xo+scxa, -scya/2, 1.01],
+        [xo+scxa,  scya/2, 1.01],
+        [xo     ,  scya/2, 1.01],
+        [xo     ,  scya  , 1.01],
+        [xo-scxa,     0  , 1.01],
+        [xo     , -scya  , 1.01],
+    ])
+
+    base = np.array([
+        [0,1,2],[0,2,3],[0,3,4],[0,4,1],[1,2,4],[2,3,4],], dtype=np.int64)
+    arrow = np.array([[5,6,8],[6,7,8],[9,10,11],], dtype=np.int64)
+
+    imagedims = I.shape[:-1]
+    if mask is None:
+        mask = np.zeros(imagedims, dtype=bool)
+
+    for i in range(imagedims[0]):
+        for j in range(imagedims[1]):
+            v0 = np.array([[-2.5*i, 0, 2.1*j]])
+            mlab.points3d(*np.hsplit(v0,3), color=(1,0,0), scale_factor=.1)
+            v = v0 + quaternion_apply(I[i,j][None,None], vbase[None])[0,0]
+            x, y, z = np.hsplit(v, 3)
+            col = (.9,.3,.3) if mask[i,j] else (.9,.9,.9)
+            mlab.triangular_mesh(x, y, z, base, color=col, opacity=0.8)
+            mlab.triangular_mesh(x, y, z, arrow, color=(.0,.0,1.0), opacity=0.8)
+
+    if filename is None:
+        mlab.show()
+    else:
+        mlab.savefig(filename, figure=mfig, magnification=2)
+        pass
+
 def plot_spd2(Is, filename=None):
     rc('axes', linewidth=0.5)
     rc('font', size=7, family='serif')
@@ -236,66 +291,13 @@ def plot_terrain_maps(Is, dt, filename=None):
 def plot_curves(curves, mfd, subgrid=None, filename=None):
     if mfd.ndim == 3:
         if type(mfd).__name__ == "SO3":
-            plot_curves_so3(curves, filename=filename)
+            plot_so3(np.stack(curves, axis=0), filename=filename)
         else:
             plot_curves_3d(curves, mfd, subgrid=subgrid, filename=filename)
     elif mfd.nembdim == 3:
         plot_surface_curves(curves, mfd, subgrid=subgrid, filename=filename)
     else:
         plot_curves_2d(curves, mfd, subgrid=subgrid, filename=filename)
-
-def plot_curves_so3(curves, filename=None):
-    """ Plot sequences of SO(3) rotation matrices """
-    from mayavi import mlab
-    if filename is not None:
-        mlab.options.offscreen = True
-        # don't do anything, because we can't avoid an annoying dialog
-        return
-    mfig = mlab.figure(size=(1600, len(curves)*300), bgcolor=(1,1,1))
-    mfig.scene.parallel_projection = True
-    mlab.view(elevation=90, azimuth=90)
-
-    scale = 1.0
-    scx, scy = 0.5*0.75*scale, 0.5*scale
-    scxa = 0.4*scx  # length of arrow head (and shaft!)
-    scya = 0.6*scxa # width of arrow head (and double width of shaft)
-    xo = -0.15*scx
-    vbase = np.array([
-        [ 0, 0, 0],         # anchor
-        [ scx,  scy, 1],    # rectangle/box
-        [-scx,  scy, 1],
-        [-scx, -scy, 1],
-        [ scx, -scy, 1],
-        [xo     , -scya/2, 1.01], # orientational arrow
-        [xo+scxa, -scya/2, 1.01],
-        [xo+scxa,  scya/2, 1.01],
-        [xo     ,  scya/2, 1.01],
-        [xo     ,  scya  , 1.01],
-        [xo-scxa,     0  , 1.01],
-        [xo     , -scya  , 1.01],
-    ])
-
-    base = np.array([
-        [0,1,2],[0,2,3],[0,3,4],[0,4,1],[1,2,4],[2,3,4],], dtype=np.int64)
-    arrow = np.array([[5,6,8],[6,7,8],[9,10,11],], dtype=np.int64)
-
-    for k,crv in enumerate(curves):
-        v0s = np.zeros((len(crv),3))
-        v0s[:,2] = -2.5*k
-        v0s[:,0] = 2.1*np.arange(len(crv))
-        mlab.points3d(*np.hsplit(v0s,3), color=(1,0,0), scale_factor=.1)
-        for v0,q in zip(v0s,crv):
-            v = quaternion_apply(q[None,None], vbase[None])[0,0]
-            v += v0
-            x, y, z = np.hsplit(v, 3)
-            mlab.triangular_mesh(x, y, z, base, color=(.9,.9,.9), opacity=0.8)
-            mlab.triangular_mesh(x, y, z, arrow, color=(.0,.0,1.0), opacity=0.8)
-
-    if filename is None:
-        mlab.show()
-    else:
-        mlab.savefig(filename, figure=mfig, magnification=2)
-        pass
 
 def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
