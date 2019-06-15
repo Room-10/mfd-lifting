@@ -68,7 +68,9 @@ inline void normalize(size_t DIM, double *n) {
     for (uint i = 0; i < DIM; i++) {
         norm += n[i]*n[i];
     }
-    scalar_multiply(DIM, 1.0/std::sqrt(norm), n);
+    if (norm >= TOL) {
+        scalar_multiply(DIM, 1.0/std::sqrt(norm), n);
+    }
 }
 
 inline double lower_normal_3d(double *v0, double *v1, double *v2, double *n) {

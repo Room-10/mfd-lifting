@@ -128,7 +128,11 @@ def piecewise_convexify_nd(np.ndarray[np.float64_t, ndim=2] points,
         for i in range(nfuns):
             for j in range(nsubpoints):
                 graph[j,-1] = vals[i,tri[j]]
-            graph[-1,-1] = graph[:,-1].max() + 0.1
+            if np.all(graph[:-1,-1] == graph[0,-1]):
+                faces[i].append(np.arange(ndim+1)[None])
+                base[i,tri[:ndim+1]] = 1
+                continue
+            graph[-1,-1] = graph[:-1,-1].max() + 0.1
             hull = getConvexHullND(ndim, <double*>graph.data,
                                    graph.shape[0],
                                    <char*>base_ij.data)
