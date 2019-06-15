@@ -18,7 +18,7 @@ class Data(ManifoldValuedData):
         self.N = self.N_image = np.prod(self.imagedims)
         self.rhoResolution = self.imagedims
         self.rhoGrid, h = cell_centered_grid(self.rhoDomain, self.rhoResolution)
-        s = 1
+        s = 10
         h = 2*np.pi*s/5
         ManifoldValuedData.__init__(self, P2(s, h), *args, **kwargs)
 
