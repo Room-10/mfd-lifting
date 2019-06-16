@@ -26,8 +26,8 @@ class Data(ManifoldValuedData):
         q1 = np.array([np.cos(np.pi/4), 0, np.sin(np.pi/4), 0])
         q2 = np.array([np.cos(np.pi/2), np.sin(np.pi/2), 0, 0])
         qbase = quaternion_prod(q2, q1)
-        h1 = -0.3 + np.linspace(0, 5*np.pi, nqs)[:,None]
-        h2 = -0.3 + np.linspace(0, 5*np.pi, nqs)[None]
+        h1 = -0.3 + np.linspace(0, 2*np.pi, nqs)[:,None]
+        h2 = -0.3 + np.linspace(0, 2*np.pi, nqs)[None]
         q3 = np.stack((-np.cos(h2/3)*np.cos(h1/2),
                         np.cos(h2/3)*np.sin(h1/2),
                        -np.sin(h2/3)*np.sin(h1/6),
@@ -43,7 +43,7 @@ class Data(ManifoldValuedData):
         elif mode == "corners":
             self.inpaint_msk[[0,0,-1,-1],[0,-1,0,-1]] = False
         else:
-            self.I[:,-5:] = np.array([np.cos(np.pi/5), 0, -np.sin(np.pi/5), 0])[None,None]
+            self.I[:,-5:] = np.array([-np.cos(np.pi/3), 0, -np.sin(np.pi/3), 0])[None,None]
             self.inpaint_msk[:,[0,1,-2,-1]] = False
             self.inpaint_msk[[0,1,-2,-1],:] = False
         self.constr_msk[:] = np.logical_not(self.inpaint_msk)
