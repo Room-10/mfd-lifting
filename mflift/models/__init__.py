@@ -55,9 +55,10 @@ class SublabelModel(PDBaseModel):
                 uproj[:] = self.data.initializer
             utris, coords = self.data.mfd.embed_barycentric(uproj)
             x['u'][:] = coords
-            for i,tr in enumerate(utris):
-                x['w12'][tr,i,:-1] = coords[i,self.data.P[tr,:-1]]
-                x['w12'][tr,i,-1] = -1.0
+            if 'w12' in x.keys():
+                for i,tr in enumerate(utris):
+                    x['w12'][tr,i,:-1] = coords[i,self.data.P[tr,:-1]]
+                    x['w12'][tr,i,-1] = -1.0
 
     def proj(self, u):
         u = u.copy()

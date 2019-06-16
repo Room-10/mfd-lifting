@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 from mflift.tools.linalg import quaternion_so3
 
-def plot_so3(I, mask=None, shape="piano", filename=None):
+def plot_so3(I, mask=None, shape="tric", filename=None):
     """ Plot (masked) image of SO(3) rotation matrices """
     import vtk
 
@@ -40,7 +40,7 @@ def plot_so3(I, mask=None, shape="piano", filename=None):
     reader.SetFileName(stl_file)
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
-    camzoom = 1000 # simulates parallel projection
+    camzoom = 100 # simulates parallel projection
     camdist = camzoom*2*steps*max(*imagedims)
     campos = (0.5*steps*(imagedims[1]-1),-camdist,-0.5*steps*(imagedims[0]-1))
     camera = vtk.vtkCamera()
