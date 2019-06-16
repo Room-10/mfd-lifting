@@ -17,7 +17,8 @@ class Model(SublabelModel):
         SublabelModel.__init__(self, *args, **kwargs)
         self.lbd = lbd
         self.fdscheme = fdscheme
-        logging.info("Init model '%s' (lambda=%.2e)" % (self.name, self.lbd))
+        logging.info("Init model '%s' (lambda=%.2e,fdscheme=%s)" \
+                     % (self.name, self.lbd, self.fdscheme))
 
         imagedims = self.data.imagedims
         N_image = self.data.N_image

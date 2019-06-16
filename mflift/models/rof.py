@@ -20,8 +20,10 @@ class Model(SublabelModel):
         self.regularizer = regularizer
         self.alph = alph
         self.fdscheme = fdscheme
-        logging.info("Init model '%s' (%s regularizer, lambda=%.2e)" \
-                     % (self.name, self.regularizer, self.lbd))
+        logging.info("Init model '%s' (%s regularizer, lambda=%.2e, "
+                                      "alpha=%.2e, fdscheme=%s)" \
+                     % (self.name, self.regularizer, self.lbd,
+                        self.alph, self.fdscheme))
 
         imagedims = self.data.imagedims
         N_image = self.data.N_image

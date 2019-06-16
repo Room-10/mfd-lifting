@@ -19,8 +19,8 @@ class Model(SublabelModel):
         self.lbd = lbd
         self.alph = alph
         self.fdscheme = fdscheme
-        logging.info("Init model '%s' (lambda=%.2e, alpha=%.2e)" \
-                     % (self.name, self.lbd, self.alph))
+        logging.info("Init model '%s' (lambda=%.2e, alpha=%.2e, fdscheme=%s)" \
+                     % (self.name, self.lbd, self.alph, self.fdscheme))
 
         imagedims = self.data.imagedims
         N_image = self.data.N_image

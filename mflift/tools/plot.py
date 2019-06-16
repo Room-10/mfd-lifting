@@ -59,7 +59,7 @@ def plot_so3(I, mask=None, filename=None):
             mlab.points3d(*np.hsplit(v0,3), color=(1,0,0), scale_factor=.1)
             v = v0 + quaternion_apply(I[i,j][None,None], vbase[None])[0,0]
             x, y, z = np.hsplit(v, 3)
-            col = (.9,.3,.3) if mask[i,j] else (.9,.9,.9)
+            col = (.3,.9,.3) if mask[i,j] else (.9,.9,.9)
             mlab.triangular_mesh(x, y, z, base, color=col, opacity=0.8)
             mlab.triangular_mesh(x, y, z, arrow, color=(.0,.0,1.0), opacity=0.8)
 
