@@ -43,7 +43,9 @@ class Data(ManifoldValuedData):
         elif mode == "corners":
             self.inpaint_msk[[0,0,-1,-1],[0,-1,0,-1]] = False
         else:
-            self.I[:,-5:] = np.array([-np.cos(np.pi/3), 0, -np.sin(np.pi/3), 0])[None,None]
+            if mode == "edge":
+                self.I[:,-5:] = np.array([-np.cos(np.pi/3), 0,
+                                          -np.sin(np.pi/3), 0])[None,None]
             self.inpaint_msk[:,[0,1,-2,-1]] = False
             self.inpaint_msk[[0,1,-2,-1],:] = False
         self.constr_msk[:] = np.logical_not(self.inpaint_msk)
