@@ -12,62 +12,86 @@ from matplotlib.collections import PolyCollection, EllipseCollection
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
-from mflift.tools.linalg import quaternion_apply
+from mflift.tools.linalg import quaternion_so3
 
-def plot_so3(I, mask=None, filename=None):
+def plot_so3(I, mask=None, shape="piano", filename=None):
     """ Plot (masked) image of SO(3) rotation matrices """
-    from mayavi import mlab
-    if filename is not None:
-        mlab.options.offscreen = True
-        # don't do anything, because we can't avoid an annoying dialog
-        return
-    mfig = mlab.figure(size=(900,900), bgcolor=(1,1,1))
-    mfig.scene.parallel_projection = True
-    mlab.view(elevation=90, azimuth=90)
-
-    scale = 1.0
-    scx, scy = 0.5*0.75*scale, 0.5*scale
-    scxa = 0.4*scx  # length of arrow head (and shaft!)
-    scya = 0.6*scxa # width of arrow head (and double width of shaft)
-    xo = -0.15*scx
-    vbase = np.array([
-        [ 0, 0, 0],         # anchor
-        [ scx,  scy, 1],    # rectangle/box
-        [-scx,  scy, 1],
-        [-scx, -scy, 1],
-        [ scx, -scy, 1],
-        [xo     , -scya/2, 1.01], # orientational arrow
-        [xo+scxa, -scya/2, 1.01],
-        [xo+scxa,  scya/2, 1.01],
-        [xo     ,  scya/2, 1.01],
-        [xo     ,  scya  , 1.01],
-        [xo-scxa,     0  , 1.01],
-        [xo     , -scya  , 1.01],
-    ])
-
-    base = np.array([
-        [0,1,2],[0,2,3],[0,3,4],[0,4,1],[1,2,4],[2,3,4],], dtype=np.int64)
-    arrow = np.array([[5,6,8],[6,7,8],[9,10,11],], dtype=np.int64)
+    import vtk
 
     imagedims = I.shape[:-1]
     if mask is None:
         mask = np.zeros(imagedims, dtype=bool)
+    M = quaternion_so3(I)
+
+    if shape == "piano":
+        # https://www.thingiverse.com/thing:148696
+        # CC-BY-NC-SA kazysd
+        stl_file = "data/piano_assembly.stl"
+        steps = 200
+        pos = (150,-20,0)
+    else:
+        # https://www.thingiverse.com/thing:3313805
+        # CC-BY-NC-SA BillyOceansBlues
+        stl_file = "data/Triceratops_plane_cut.stl"
+        steps = 100
+        pos = (0,0,0)
+
+    reader = vtk.vtkSTLReader()
+    reader.SetFileName(stl_file)
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(reader.GetOutputPort())
+    camzoom = 1000 # simulates parallel projection
+    camdist = camzoom*2*steps*max(*imagedims)
+    campos = (0.5*steps*(imagedims[1]-1),-camdist,-0.5*steps*(imagedims[0]-1))
+    camera = vtk.vtkCamera()
+    camera.SetPosition(*campos)
+    camera.SetFocalPoint(campos[0]+1,0,campos[2]-1) # bug in VTK (polar coords?)
+    camera.Roll(45)
+    camera.Zoom(camzoom)
+    camera.SetClippingRange(0.5*camdist, 2*camdist)
+    ren = vtk.vtkRenderer()
+    ren.SetActiveCamera(camera)
+    ren.SetBackground(vtk.vtkNamedColors().GetColor3d("White"))
+    renWin = vtk.vtkRenderWindow()
+    renWin.AddRenderer(ren)
+    matrix = vtk.vtkMatrix4x4()
 
     for i in range(imagedims[0]):
         for j in range(imagedims[1]):
-            v0 = np.array([[-2.5*i, 0, 2.1*j]])
-            mlab.points3d(*np.hsplit(v0,3), color=(1,0,0), scale_factor=.1)
-            v = v0 + quaternion_apply(I[i,j][None,None], vbase[None])[0,0]
-            x, y, z = np.hsplit(v, 3)
-            col = (.3,.9,.3) if mask[i,j] else (.9,.9,.9)
-            mlab.triangular_mesh(x, y, z, base, color=col, opacity=0.8)
-            mlab.triangular_mesh(x, y, z, arrow, color=(.0,.0,1.0), opacity=0.8)
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+            col = (1.0,0.4,0.5) if mask[i,j] else (0.7,0.7,0.7)
+            actor.GetProperty().SetColor(*col)
+            actor.SetPosition(*pos)
+
+            T = np.eye(4)
+            T[:3,3] = np.array([steps*j,0,-steps*i])
+            T[:3,:3] = M[i,j]
+            [matrix.SetElement(k,l,T[k,l]) for k in range(4) for l in range(4)]
+            T = vtk.vtkTransform()
+            T.SetMatrix(matrix)
+            actor.SetUserTransform(T)
+
+            ren.AddActor(actor)
 
     if filename is None:
-        mlab.show()
+        iren = vtk.vtkRenderWindowInteractor()
+        iren.SetRenderWindow(renWin)
+        iren.Initialize()
+        renWin.Render()
+        iren.Start()
     else:
-        mlab.savefig(filename, figure=mfig, magnification=2)
-        pass
+        filename = "%s.png" % filename[:-4]
+        renWin.SetOffScreenRendering(True)
+        renWin.Render()
+        win2img = vtk.vtkWindowToImageFilter()
+        win2img.SetInput(renWin)
+        win2img.SetScale(10)
+        win2img.SetInputBufferTypeToRGBA()
+        writer = vtk.vtkPNGWriter()
+        writer.SetInputConnection(win2img.GetOutputPort())
+        writer.SetFileName(filename)
+        writer.Write()
 
 def plot_spd2(Is, filename=None):
     rc('axes', linewidth=0.5)

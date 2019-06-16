@@ -63,6 +63,22 @@ def normalize(u, p=2, thresh=0.0):
     out = fact[:,None]*u
     return out[0] if multi is None else out.reshape(multi)
 
+def quaternion_so3(q):
+    """ Represent quaternion as 3x3 matrix
+
+    Args:
+        q : ndarray of floats, shape (..., 4)
+
+    Returns:
+        ndarray of floats, shape (..., 3, 3)
+    """
+    x, y, z, w = q[...,0], q[...,1], q[...,2], q[...,3]
+    return np.stack((
+            1 - 2*y**2 - 2*z**2,       2*x*y - 2*z*w,       2*x*z + 2*y*w,
+                  2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2,       2*y*z - 2*x*w,
+                  2*x*z - 2*y*w,       2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2,),
+        axis=-1).reshape(x.shape + (3,3))
+
 def quaternion_conj(q):
     """ Apply conjugation operation to quaternion
 

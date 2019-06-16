@@ -4,7 +4,7 @@ import numpy as np
 from scipy.io import loadmat
 
 from mflift.manifolds import DiscretizedManifold
-from mflift.tools.linalg import normalize
+from mflift.tools.linalg import normalize, quaternion_so3
 
 class SO3(DiscretizedManifold):
     """ 3-dimensional rotational group represented using unit quaternions """
@@ -114,13 +114,7 @@ class SO3(DiscretizedManifold):
         out[:]= np.arccos(np.abs(np.clip(out, -1.0, 1.0)))
 
     def embed(self, x):
-        """ Represent quaternion as 3x3 matrix """
-        x, y, z, w = x[...,0], x[...,1], x[...,2], x[...,3]
-        return np.stack((
-                1 - 2*y**2 - 2*z**2,       2*x*y - 2*z*w,       2*x*z + 2*y*w,
-                      2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2,       2*y*z - 2*x*w,
-                      2*x*z - 2*y*w,       2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2,),
-            axis=-1)
+        return quaternion_so3(x).reshape(x.shape[:-1] + (9,))
 
 def so3mesh_hexacosichoron():
     """ 4-d regular hexacosichoron (600-cell) where opposite points are
