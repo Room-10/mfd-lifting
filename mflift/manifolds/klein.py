@@ -47,6 +47,7 @@ class KleinBottle(DiscretizedManifold):
                        (phi10*tres + t10).ravel(order='C'),
                        (phi11*tres + t11).ravel(order='C'),)).T,
             ), axis=0)
+        simplices[:] = simplices.reshape(2, M_tris//2, 3).transpose(1,0,2).reshape(-1,3)
         return verts, simplices
 
     def _log(self, location, pfrom, out):

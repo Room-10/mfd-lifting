@@ -325,6 +325,7 @@ def plot_curves(curves, mfd, subgrid=None, filename=None):
 
 def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
     """ Plot curves on a triangulated surface embedded in R^3 """
+    assert len(curves) == 2
     from mayavi import mlab
     if filename is not None:
         mlab.options.offscreen = True
@@ -348,14 +349,11 @@ def plot_surface_curves(curves, mfd, subgrid=None, filename=None):
                 mlab.plot3d(*np.hsplit(crv,3),
                     color=(.2,.2,.2), tube_radius=.015)
 
-    pointcurves = []
     orthcurves = []
-    if len(curves) > 2:
-        pointcurves = curves[:-1]
-        curves = curves[-1:]
-    else:
-        for crv in np.stack(curves, axis=1):
-            orthcurves.append(mfd.geodesic(crv[0], crv[1], 10))
+    for crv in np.stack(curves, axis=1):
+        orthcurves.append(mfd.geodesic(crv[0], crv[1], 10))
+    pointcurves = curves[:-1]
+    curves = curves[-1:]
 
     for k in range(len(curves)):
         crv = []
