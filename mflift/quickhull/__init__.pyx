@@ -1,8 +1,8 @@
-
+# cython: language_level=3
 import numpy as np
 cimport numpy as np
 
-from convexhull cimport getConvexHull1D, getConvexHullND
+from mflift.quickhull.convexhull cimport getConvexHull1D, getConvexHullND
 from libcpp.vector cimport vector
 
 def piecewise_convexify(points, vals, regions):
