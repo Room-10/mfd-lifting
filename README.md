@@ -31,7 +31,7 @@ problems (e.g., due to CUDA, VTK or PyQt).
 Basic Usage
 -----------
 
-Run the script `demo.py` without arguments to show available datasets and models:
+Invoke the package without arguments to show available datasets and models:
 
     (env) $ python -m mflift
 
