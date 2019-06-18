@@ -16,19 +16,18 @@ Setup
 -----
 
 The recommended (and tested) setup is based on Ubuntu 18.04 with CUDA 8.0 or
-newer. In that case, the following lines will do:
+newer (see the troubleshooting section below).
+In that case, the following lines will do:
 
     $ git submodule update --init
-    $ sudo apt install -y python3 python3-venv python3.6-dev llvm-dev g++
     $ python3 -m venv env
     $ source ./env/bin/activate
     (env) $ pip install --upgrade pip
     (env) $ pip install wheel cython numpy vtk
     (env) $ pip install -e .[cuda]
 
-It is possible to install without `[cuda]` if no GPU is available, but CUDA
-is recommended and enabled by default.
-For execution on the CPU use the solver parameter `use_gpu=False`.
+Please see the notes in the troubleshooting section below if you run into
+problems (e.g., due to CUDA, VTK or PyQt).
 
 Basic Usage
 -----------
@@ -97,6 +96,10 @@ Denoising of high resolution cyclic InSAR measurements (Fig. 13):
 Troubleshooting
 ---------------
 
+# Minimal python3 setup on Ubuntu 18.04:
+
+    $ sudo apt install -y python3 python3-venv python3.6-dev g++
+
 # Install PyQt5 for interactive surface plots (klein, moebius, sphere) on Ubuntu:
 
     $ apt install python3-pyqt5 python3-pyqt5.qtsvg
@@ -108,6 +111,12 @@ Troubleshooting
     $ sudo apt update
     $ sudo apt install -y vtk7
     $ echo "/opt/VTK-7.0.0/lib/python3.5/site-packages" > env/lib/python3.5/site-packages/vtk7.pth
+
+# Setup and usage without CUDA (not recommended)
+
+It is possible to run the install command without `[cuda]` if no GPU is available, but CUDA
+is recommended and enabled by default.
+For execution on the CPU use `--solver-params "use_gpu=False"`.
 
 Third party data
 ----------------
