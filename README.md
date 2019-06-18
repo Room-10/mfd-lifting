@@ -1,9 +1,9 @@
 
-Lifting of manifold-valued image processing problems with convex regularizers
-=============================================================================
+Lifting methods for manifold-valued variational problems
+========================================================
 
-Solve manifold-valued image processing problems by convex relaxation.
-Only convex first-order regularizing terms are supported.
+Solve manifold-valued image processing problems by convex relaxation (functional lifting).
+Several convex first-order regularizers are available.
 
 If you use code from this repository within scientific work, please cite:
 
