@@ -11,6 +11,13 @@ class Data(ManifoldValuedData):
     imagedims = (50,)
     imageh = (1.0,)
     rhoDomain = np.array([[0.0,1.0]])
+    default_params = {
+        'model': {
+            'tv': {
+                'lbd': 3.0,
+            },
+        },
+    }
 
     def __init__(self, *args, dimsubls=10, dimres=45, **kwargs):
         self.l_dimsubls = dimsubls

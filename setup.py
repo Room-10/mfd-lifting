@@ -61,6 +61,7 @@ setup(
         "opymize @ https://github.com/room-10/Opymize/archive/master.zip#egg=opymize-0.1",
         "repyducible @ https://github.com/room-10/Repyducible/archive/master.zip#egg=repyducible-0.1",
         "scipy==1.2.1",
+        "sip==4.19.8",
         "vtk==8.1.2",
     ],
     extras_require={'cuda': ["pycuda==2018.1.1"]},

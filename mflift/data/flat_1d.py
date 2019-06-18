@@ -11,6 +11,13 @@ class Data(ManifoldValuedData):
     imagedims = (50,)
     imageh = (1.0,)
     rhoDomain = np.array([[0.0,1.0]])
+    default_params = {
+        'model': {
+            '*': {
+                'lbd': 0.5,
+            },
+        },
+    }
 
     def __init__(self, *args, labels=(2, 20), **kwargs):
         assert len(labels) == 2
