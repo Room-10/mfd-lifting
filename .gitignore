@@ -1,9 +1,5 @@
 *.pyc
 *.egg-info
 *.lprof
-*.cpython*.so
 __pycache__
-/mflift/quickhull/__init__.cpp
-/build
 /env
-/cache

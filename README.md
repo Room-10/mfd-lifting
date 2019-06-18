@@ -19,11 +19,10 @@ The recommended (and tested) setup is based on Ubuntu 18.04 with CUDA 8.0 or
 newer (see the troubleshooting section below).
 In that case, the following lines will do:
 
-    $ git submodule update --init
     $ python3 -m venv env
     $ source ./env/bin/activate
     (env) $ pip install --upgrade pip
-    (env) $ pip install wheel cython numpy vtk
+    (env) $ pip install wheel numpy vtk
     (env) $ pip install -e .[cuda]
 
 Please see the notes in the troubleshooting section below if you run into

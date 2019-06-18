@@ -3,8 +3,8 @@ import logging
 import numpy as np
 
 from repyducible.data import Data as BaseData
+from opymize.quickhull import piecewise_convexify
 
-from mflift.quickhull import piecewise_convexify
 from mflift.tools.linalg import barygrid
 
 class ManifoldValuedData(BaseData):
