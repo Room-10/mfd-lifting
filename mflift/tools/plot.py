@@ -231,7 +231,7 @@ def plot_rcom(result, data, filename=None):
         plt.close(fig)
 
 def plot_hue_images(Is, filename=None):
-    rc('font', size=7, family='serif')
+    rc('font', size=12, family='serif')
     rc('xtick.major', size=2.5, width=0.5)
     rc('ytick.major', size=2.5, width=0.5)
     fig = plt.figure(figsize=(10.7,5), dpi=100)
@@ -240,7 +240,7 @@ def plot_hue_images(Is, filename=None):
         ax = fig.add_subplot(100 + 10*len(Is) + (i+1))
         ax.imshow(I, vmin=0, vmax=2*np.pi, cmap='hsv')
 
-    fig.subplots_adjust(left=0.04, bottom=0.05, right=0.99, top=0.99, wspace=0.07, hspace=0)
+    fig.subplots_adjust(left=0.045, bottom=0.05, right=0.99, top=0.98, wspace=0.085, hspace=0)
     if filename is None:
         plt.show()
     else:
@@ -251,7 +251,7 @@ def plot_hue_images(Is, filename=None):
 def plot_terrain_maps(Is, dt, filename=None):
     rc('grid', linestyle=':')
     rc('axes', linewidth=0.5)
-    rc('font', size=7, family='serif')
+    rc('font', size=11, family='serif')
     rc('xtick', top=True, direction='in')
     rc('xtick.major', size=2.5, width=0.5)
     rc('ytick', right=True, direction='in')
@@ -301,10 +301,10 @@ def plot_terrain_maps(Is, dt, filename=None):
         ax.set_zlim((dt['uu'].min()-0.5, dt['uu'].max()-1))
         ztickmin = int(10*np.ceil(dt['uu'].min()/10))
         ztickmax = int(10*np.floor(dt['uu'].max()/10))
-        ztickstride = int(np.ceil((ztickmax - ztickmin)/3))
+        ztickstride = int(np.ceil((ztickmax - ztickmin)/2))
         ax.set_zticks(range(ztickmin, ztickmax+ztickstride, ztickstride))
 
-    fig.subplots_adjust(left=0.02, bottom=0.1, right=1, top=0.9, wspace=0.05, hspace=0)
+    fig.subplots_adjust(left=0.02, bottom=0.12, right=1, top=0.9, wspace=0.02, hspace=0)
     if filename is None:
         plt.show()
     else:
