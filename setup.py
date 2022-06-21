@@ -27,7 +27,7 @@ setup(
         "matplotlib==3.0.3",
         "mayavi==4.6.2",
         "numba==0.43.1",
-        "numpy==1.16.3",
+        "numpy==1.22.0",
         opymize_pkg,
         repyd_pkg,
         "scikit-image==0.15.0",
