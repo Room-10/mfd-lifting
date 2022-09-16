@@ -33,7 +33,7 @@ setup(
         "scikit-image==0.15.0",
         "scipy==1.2.1",
         "sip==4.19.8",
-        "vtk==8.1.2",
+        "vtk==9.0.1",
     ],
     extras_require={'cuda': ["pycuda==2018.1.1"]},
 )
