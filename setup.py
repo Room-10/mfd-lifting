@@ -31,7 +31,7 @@ setup(
         opymize_pkg,
         repyd_pkg,
         "scikit-image==0.15.0",
-        "scipy==1.2.1",
+        "scipy==1.10.0",
         "sip==4.19.8",
         "vtk==8.1.2",
     ],
